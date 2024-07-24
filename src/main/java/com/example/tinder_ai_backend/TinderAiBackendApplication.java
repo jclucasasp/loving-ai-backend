@@ -9,7 +9,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.Properties;
 
 @SpringBootApplication
 @RequiredArgsConstructor
@@ -22,6 +29,22 @@ public class TinderAiBackendApplication implements CommandLineRunner {
     }
 
     public void run(String... args) {
+
+        try {
+            Properties envProps = new Properties();
+            envProps.load(new FileInputStream("src/main/resources/.env"));
+            final String API_KEY = envProps.getProperty("API_KEY");
+//            System.out.println("ENV Api Key: [ "+ API_KEY+ " ]");
+
+            Properties appProps = new Properties();
+            appProps.load(new FileInputStream("src/main/resources/application.properties"));
+            appProps.setProperty("spring.ai.openai.api-key", API_KEY);
+//            System.out.println("Application api key after being set from env: [ "+ appProps.getProperty("spring.ai.openai.api-key")+" ]");
+
+        } catch (IOException io) {
+            throw new RuntimeException("Unable to fetch .env: \n"+ io.getCause());
+        }
+
         Profile profile = new Profile(
                 "1",
                 "JC",
