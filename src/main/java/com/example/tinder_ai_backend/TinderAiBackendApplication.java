@@ -7,19 +7,14 @@ import com.example.tinder_ai_backend.profile.Gender;
 import com.example.tinder_ai_backend.profile.Profile;
 import com.example.tinder_ai_backend.profile.ProfileRepo;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.message.Message;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -53,7 +48,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
             throw new RuntimeException("Unable to fetch .env: \n" + io.getCause());
         }
 
-        Profile profile = new Profile(
+        Profile profile1 = new Profile(
                 "1",
                 "JC",
                 "Lucas",
@@ -65,15 +60,23 @@ public class TinderAiBackendApplication implements CommandLineRunner {
                 "SIGMA"
         );
 
-        try {
-            Optional<Profile> existingProfile = profileRepo.findById(profile.id());
-            if (existingProfile.isPresent()) {
-                System.out.println("\nID [" + profile.id() + "] already exist, updating...");
-            } else {
-                System.out.println("\nPreparing to create new profile...");
-            }
+        Profile profile2 = new Profile(
+                "2",
+                "EC",
+                "Lucas",
+                42,
+                "Caucasian",
+                Gender.FEMALE,
+                "Accountent",
+                "blue.jpg",
+                "IGNF"
+        );
 
-            profileRepo.save(profile);
+        List<Profile> profiles = new ArrayList<>(){{ add(profile1); add(profile2); }};
+
+        try {
+            System.out.println("Preparing to save or update profile...");
+            profileRepo.saveAll(profiles);
 
         } catch (Exception e) {
             System.out.println("\nUnable to save profile: \n" + e.getCause());
@@ -82,9 +85,8 @@ public class TinderAiBackendApplication implements CommandLineRunner {
             profileRepo.findAll().forEach(System.out::println);
         }
 
-        Conversation conversation = new Conversation("1", profile.id(), List.of(
-                new ChatMessage("Ello Govner", profile.id(), LocalDateTime.now())
-
+        Conversation conversation = new Conversation("1", profile1.id(), List.of(
+                new ChatMessage("Ello Govner", profile1.id(), LocalDateTime.now())
         ));
 
         try {
@@ -96,8 +98,8 @@ public class TinderAiBackendApplication implements CommandLineRunner {
             // conversations.forEach(System.out::println);
 
             for (Conversation c: conversations) {
-                System.out.println("Conversation id: " + c.id());
-                System.out.println("Profile id: " + c.profileId());
+                System.out.println("Conversation profileId: " + c.id());
+                System.out.println("Profile profileId: " + c.profileId());
 
                 for (ChatMessage chatMessage : c.messages()) {
                     System.out.println(chatMessage.messageText());
@@ -106,7 +108,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
         } catch (Exception c) {
             System.out.println("Unable to save the conversation: \n" + c.getCause());
         } finally {
-            System.out.println("Conversation with id: [ "+conversation.id()+" ] saved to mongodb...");
+            System.out.println("Conversation with profileId: [ "+conversation.id()+" ] saved to mongodb...");
         }
     }
 }
