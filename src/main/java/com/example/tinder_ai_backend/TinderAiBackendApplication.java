@@ -67,7 +67,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
                 42,
                 "Caucasian",
                 Gender.FEMALE,
-                "Accountent",
+                "Accounted",
                 "blue.jpg",
                 "IGNF"
         );
@@ -98,8 +98,8 @@ public class TinderAiBackendApplication implements CommandLineRunner {
             // conversations.forEach(System.out::println);
 
             for (Conversation c: conversations) {
-                System.out.println("Conversation profileId: " + c.id());
-                System.out.println("Profile profileId: " + c.profileId());
+                System.out.println("Conversation authorId: " + c.id());
+                System.out.println("Profile authorId: " + c.profileId());
 
                 for (ChatMessage chatMessage : c.messages()) {
                     System.out.println(chatMessage.messageText());
@@ -108,7 +108,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
         } catch (Exception c) {
             System.out.println("Unable to save the conversation: \n" + c.getCause());
         } finally {
-            System.out.println("Conversation with profileId: [ "+conversation.id()+" ] saved to mongodb...");
+            System.out.println("Conversation with authorId: [ "+conversation.id()+" ] saved to mongodb...");
         }
     }
 }
