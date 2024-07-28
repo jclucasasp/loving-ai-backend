@@ -29,6 +29,11 @@ public class ConversationController {
     @PostMapping(value = "/conversation")
     public Conversation createConversation(@RequestBody ConversationRequest request) {
 
+        if (request.profileId == null || request.profileId.isBlank()) {
+            System.err.println("Profile id is blank!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "profileId is blank or missing");
+        }
+
         profileRepo.findById(request.profileId()).orElseThrow(() -> {
             System.err.println("No profile found for id: [ " + request.profileId + " ]");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -47,9 +52,9 @@ public class ConversationController {
     @PostMapping(value = "/conversation/{conversationId}")
     public ResponseEntity<Optional<Conversation>> addMessage(@PathVariable("conversationId") String conversationId, @RequestBody ChatMessage message) {
 
-        if (message.profileId().isBlank()) {
+        if (message.profileId() == null || message.profileId().isBlank()) {
             System.err.println("Profile id is blank!");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile id is blank!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "conversationId is blank or missing");
         }
 
         Optional<Conversation> conversation = Optional.ofNullable(conversationRepo.findById(conversationId).orElseThrow(() -> {
@@ -62,6 +67,15 @@ public class ConversationController {
             conversationRepo.save(m);
             return m;
         })));
+    }
+
+    @GetMapping(value = "/conversation/{conversationId}")
+    public Optional<Conversation> getConversationById(@PathVariable("conversationId") String conversationId) {
+
+        return Optional.ofNullable(conversationRepo.findById(conversationId).orElseThrow(() -> {
+            System.err.println("No conversation found for id: [" + conversationId + " ]");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }));
     }
 
     @DeleteMapping(value = "/conversation/del", produces = MediaType.APPLICATION_JSON_VALUE)
