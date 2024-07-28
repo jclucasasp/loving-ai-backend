@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record ChatMessage(
         String messageText,
-        String authorId,
+        String profileId,
         LocalDateTime messageTime
 ) {
 }
