@@ -2,6 +2,8 @@ package com.example.tinder_ai_backend.conversations;
 
 import com.example.tinder_ai_backend.profile.ProfileRepo;
 import lombok.AllArgsConstructor;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,10 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Stream;
 
 @RestController
 @AllArgsConstructor
@@ -29,6 +29,8 @@ public class ConversationController {
     @PostMapping(value = "/conversation")
     public Conversation createConversation(@RequestBody ConversationRequest request) {
 
+        Conversation conversation = null;
+
         if (request.profileId == null || request.profileId.isBlank()) {
             System.err.println("Profile id is blank!");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "profileId is blank or missing");
@@ -39,13 +41,23 @@ public class ConversationController {
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
-        Conversation conversation = new Conversation(
-                UUID.randomUUID().toString(),
-                request.profileId(),
-                new ArrayList<>()
-        );
+        Optional<Conversation> existingConv = Optional.ofNullable(conversationRepo.findByProfileId(request.profileId())).orElseThrow(() -> {
+            System.err.println("Unable to retrieve an existing conversation for profile id: [ "+request.profileId+" ]");
+            return new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        });
 
-        conversationRepo.save(conversation);
+        if (existingConv.isPresent()) {
+            System.out.println("Conversation id already created, exiting...");
+            throw  new ResponseStatusException(HttpStatus.CONFLICT);
+        } else {
+            System.out.println("No id for conversation found, creating new conversation...");
+            conversation = new Conversation(
+                    UUID.randomUUID().toString(),
+                    request.profileId(),
+                    new ArrayList<>()
+            );
+            conversationRepo.save(conversation);
+        }
         return conversation;
     }
 
