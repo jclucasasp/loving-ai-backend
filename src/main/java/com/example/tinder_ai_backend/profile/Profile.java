@@ -1,5 +1,6 @@
 package com.example.tinder_ai_backend.profile;
 
+
 public record Profile(
         String id,
         String firstName,

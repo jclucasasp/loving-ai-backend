@@ -2,8 +2,6 @@ package com.example.tinder_ai_backend.conversations;
 
 import com.example.tinder_ai_backend.profile.ProfileRepo;
 import lombok.AllArgsConstructor;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +10,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Stream;
 
 @RestController
 @AllArgsConstructor
@@ -29,7 +26,7 @@ public class ConversationController {
     @PostMapping(value = "/conversation")
     public Conversation createConversation(@RequestBody ConversationRequest request) {
 
-        Conversation conversation = null;
+        Conversation conversation;
 
         if (request.profileId == null || request.profileId.isBlank()) {
             System.err.println("Profile id is blank!");
