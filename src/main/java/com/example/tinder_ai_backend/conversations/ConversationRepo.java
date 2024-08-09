@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface ConversationRepo extends MongoRepository<Conversation, String> {
 
-    @Query("{profileId:?0}")
+    @Query("{fromProfileId:?0}")
     Optional<Conversation> findByProfileId(String profileId);
 }
 

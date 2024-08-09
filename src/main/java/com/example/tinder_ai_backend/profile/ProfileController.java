@@ -18,29 +18,32 @@ public class ProfileController {
     }
 
     @GetMapping("/profiles")
-    public ResponseEntity<Optional<List<Profile>>> getAllProfiles() {
-        return ResponseEntity.ok(Optional.ofNullable(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
+    public ResponseEntity<List<Profile>> getAllProfiles() {
+        return ResponseEntity.ok(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
             System.err.println("No profiles found...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No profiles found");
-        })));
+        }));
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<Optional<Profile>> getProfileByName(@RequestBody() Profile req) {
+    public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
         System.out.println(req.firstName());
         if (req.firstName() == null || req.firstName().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No params specified");
         }
-        return ResponseEntity.ok(Optional.ofNullable(profileRepo.getProfileByFirstName(req.firstName())
+        return ResponseEntity.ok(profileRepo.getProfileByFirstName(req.firstName())
                 .orElseThrow(() -> {
                     System.err.println("Nothing found under firstname : [ " + req.firstName() + " ]");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
-        ));
+        );
     }
 
     @GetMapping("/profile/random")
-    public Profile getRandomProfile() {
-        return profileRepo.getRandomProfile();
+    public ResponseEntity<Profile> getRandomProfile() {
+        return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile()).orElseThrow(() -> {
+            System.err.println("No profiles to return...");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }));
     }
 }

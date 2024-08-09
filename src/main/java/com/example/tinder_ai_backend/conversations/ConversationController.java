@@ -18,19 +18,20 @@ public class ConversationController {
     private final ConversationRepo conversationRepo;
     private final ProfileRepo profileRepo;
 
-    @GetMapping(value = "/conversation/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Conversation> getConversations() {
-        return conversationRepo.findAll();
+    @GetMapping(value = "/conversations/all", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Conversation>> getConversations() {
+        return ResponseEntity.ok(Optional.of(conversationRepo.findAll()).orElseThrow(() -> {
+            System.err.println("No conversations found...");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "No conversations found");
+        }));
     }
 
-    @PostMapping(value = "/conversation")
-    public Conversation createConversation(@RequestBody ConversationRequest request) {
-
-        Conversation conversation;
+    @PostMapping(value = "/conversations")
+    public ResponseEntity<Conversation> createConversation(@RequestBody ConversationRequest request) {
 
         if (request.profileId == null || request.profileId.isBlank()) {
             System.err.println("Profile id is blank!");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "profileId is blank or missing");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromProfileId is blank or missing");
         }
 
         profileRepo.findById(request.profileId()).orElseThrow(() -> {
@@ -39,26 +40,25 @@ public class ConversationController {
         });
 
         Optional<Conversation> existingConv = Optional.ofNullable(conversationRepo.findByProfileId(request.profileId())).orElseThrow(() -> {
-            System.err.println("Unable to retrieve an existing conversation for profile id: [ "+request.profileId+" ]");
+            System.err.println("Unable to retrieve an existing conversation for profile id: [ " + request.profileId + " ]");
             return new ResponseStatusException(HttpStatus.BAD_REQUEST);
         });
 
         if (existingConv.isPresent()) {
             System.out.println("Conversation id already created, exiting...");
-            throw  new ResponseStatusException(HttpStatus.CONFLICT);
-        } else {
-            System.out.println("No id for conversation found, creating new conversation...");
-            conversation = new Conversation(
-                    UUID.randomUUID().toString(),
-                    request.profileId(),
-                    new ArrayList<>()
-            );
-            conversationRepo.save(conversation);
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
-        return conversation;
+        System.out.println("No id for conversation found, creating new conversation...");
+        Conversation conversation = new Conversation(
+                UUID.randomUUID().toString(),
+                request.profileId(),
+                new ArrayList<>()
+        );
+        conversationRepo.save(conversation);
+        return ResponseEntity.ok(conversation);
     }
 
-    @PostMapping(value = "/conversation/{conversationId}")
+    @PostMapping(value = "/conversations/{conversationId}")
     public ResponseEntity<Optional<Conversation>> addMessage(@PathVariable("conversationId") String conversationId, @RequestBody ChatMessage message) {
 
         if (message.profileId() == null || message.profileId().isBlank()) {
@@ -78,22 +78,22 @@ public class ConversationController {
         })));
     }
 
-    @GetMapping(value = "/conversation/{conversationId}")
-    public Optional<Conversation> getConversationById(@PathVariable("conversationId") String conversationId) {
+    @GetMapping(value = "/conversations/{conversationId}")
+    public ResponseEntity<Optional<Conversation>> getConversationById(@PathVariable("conversationId") String conversationId) {
 
-        return Optional.ofNullable(conversationRepo.findById(conversationId).orElseThrow(() -> {
+        return ResponseEntity.ok(Optional.of(conversationRepo.findById(conversationId).orElseThrow(() -> {
             System.err.println("No conversation found for id: [" + conversationId + " ]");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }));
+        })));
     }
 
-    @DeleteMapping(value = "/conversation/del", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/conversations/del", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> delConversations() {
         try {
             conversationRepo.deleteAll();
             return ResponseEntity.ok("All messages deleted..");
         } catch (Exception e) {
-            throw new RuntimeException("Unable to delete conversations" + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Unable to delete conversations" + e.getMessage());
         }
     }
 
