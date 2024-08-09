@@ -18,8 +18,11 @@ public class ProfileController {
     }
 
     @GetMapping("/profiles")
-    public List<Profile> getAllProfiles() {
-        return profileRepo.findAll();
+    public ResponseEntity<Optional<List<Profile>>> getAllProfiles() {
+        return ResponseEntity.ok(Optional.ofNullable(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
+            System.err.println("No profiles found...");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "No profiles found");
+        })));
     }
 
     @GetMapping("/profile")
@@ -34,5 +37,10 @@ public class ProfileController {
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         ));
+    }
+
+    @GetMapping("/profile/random")
+    public Profile getRandomProfile() {
+        return profileRepo.getRandomProfile();
     }
 }

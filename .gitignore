@@ -35,3 +35,4 @@ build/
 ### Env ###
 .env
 *.json
+/src/main/resources/static/images/
