@@ -2,6 +2,8 @@ package com.example.tinder_ai_backend.matches;
 
 import com.example.tinder_ai_backend.conversations.Conversation;
 import com.example.tinder_ai_backend.conversations.ConversationRepo;
+import com.example.tinder_ai_backend.profile.Profile;
+import com.example.tinder_ai_backend.profile.ProfileRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,12 +12,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
+@CrossOrigin(origins = "*")
 @AllArgsConstructor
 @RestController
 public class MatchController {
 
     private final MatchRepo matchRepo;
     private final ConversationRepo conversationRepo;
+    private final ProfileRepo profileRepo;
 
     @GetMapping(value = "/matches/all")
     public ResponseEntity<List<Match>> findAll() {
@@ -23,6 +27,18 @@ public class MatchController {
             System.err.println("No matches found...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
+    }
+
+    @GetMapping(value = "/match/profiles")
+    public ResponseEntity<List<Optional<Profile>>> getAllProfilesById(@RequestBody Profile[] req) {
+        System.out.println("Printing incoming profile ids...");
+        List<Optional<Profile>> profilesById = new ArrayList<>();
+
+        for (Profile profile : req) {
+            System.out.println(profile.id());
+            profilesById.add(profileRepo.findById(profile.id()));
+        }
+        return ResponseEntity.ok(profilesById);
     }
 
     @PostMapping(value = "/match")

@@ -4,6 +4,7 @@ import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface ProfileRepo extends MongoRepository<Profile, String> {
