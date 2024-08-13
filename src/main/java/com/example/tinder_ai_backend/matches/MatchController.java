@@ -29,14 +29,17 @@ public class MatchController {
         }));
     }
 
-    @GetMapping(value = "/match/profiles")
-    public ResponseEntity<List<Optional<Profile>>> getAllProfilesById(@RequestBody Profile[] req) {
-        System.out.println("Printing incoming profile ids...");
+    @PostMapping(value = "/match/profiles")
+    public ResponseEntity<List<Optional<Profile>>> getAllProfilesById(@RequestBody Match[] req) {
         List<Optional<Profile>> profilesById = new ArrayList<>();
 
-        for (Profile profile : req) {
-            System.out.println(profile.id());
-            profilesById.add(profileRepo.findById(profile.id()));
+        try {
+            for (Match match : req) {
+                System.out.println(match.toProfileId());
+                profilesById.add(profileRepo.findById(match.toProfileId()));
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to populate profiles", e);
         }
         return ResponseEntity.ok(profilesById);
     }
