@@ -5,6 +5,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface MatchRepo extends MongoRepository<Match, String> {
 
-    @ExistsQuery("{'fromProfileId': ?0}")
+    @ExistsQuery("{'toProfileId': ?0}")
     Boolean existByProfileId(String profileId);
 }

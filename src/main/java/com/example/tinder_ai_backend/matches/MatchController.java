@@ -35,7 +35,6 @@ public class MatchController {
 
         try {
             for (Match match : req) {
-                System.out.println(match.toProfileId());
                 profilesById.add(profileRepo.findById(match.toProfileId()));
             }
         } catch (Exception e) {
@@ -44,13 +43,13 @@ public class MatchController {
         return ResponseEntity.ok(profilesById);
     }
 
-    @PostMapping(value = "/match")
+    @PostMapping(value = "/match/create")
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
         if (req == null || req.fromProfileId().isEmpty() || req.toProfileId().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body unreadable");
         }
 
-        if (matchRepo.existByProfileId(req.fromProfileId())) {
+        if (matchRepo.existByProfileId(req.toProfileId())) {
             System.err.println("Match already exist for profile id: [ " + req.fromProfileId() + " ]");
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
