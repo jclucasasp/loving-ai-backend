@@ -3,7 +3,7 @@ package com.example.tinder_ai_backend.matches;
 import java.util.Date;
 
 public record Match(
-        String matchId,
+        String id,
         Date createDate,
         String fromProfileId,
         String toProfileId,

@@ -21,6 +21,26 @@ public class MatchController {
     private final ConversationRepo conversationRepo;
     private final ProfileRepo profileRepo;
 
+    @PostMapping(value = "/match/create")
+    public ResponseEntity<Match> createMatch(@RequestBody Match req) {
+        if (req == null || req.fromProfileId().isEmpty() || req.toProfileId().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body unreadable");
+        }
+
+        if (matchRepo.existByProfileId(req.toProfileId())) {
+            System.err.println("Match already exist for profile id: [ " + req.fromProfileId() + " ]");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
+        }
+
+        Conversation conversation = new Conversation(UUID.randomUUID().toString(), req.fromProfileId(), new ArrayList<>());
+        conversationRepo.save(conversation);
+
+        Match match = new Match(UUID.randomUUID().toString(), new Date(), req.fromProfileId(), req.toProfileId(), conversation.id());
+        matchRepo.save(match);
+
+        return ResponseEntity.ok(match);
+    }
+
     @GetMapping(value = "/matches/all")
     public ResponseEntity<List<Match>> findAll() {
         return ResponseEntity.ok(Optional.of(matchRepo.findAll()).orElseThrow(() -> {
@@ -43,27 +63,18 @@ public class MatchController {
         return ResponseEntity.ok(profilesById);
     }
 
-    @PostMapping(value = "/match/create")
-    public ResponseEntity<Match> createMatch(@RequestBody Match req) {
-        if (req == null || req.fromProfileId().isEmpty() || req.toProfileId().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body unreadable");
+    @DeleteMapping(value = "/match/delete-by-id")
+    public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
+        System.out.printf("Incoming delete request for id: "+ profile.id());
+        try {
+            matchRepo.deleteById(matchRepo.findByProfileId(profile.id()).id());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: "+ profile.id(), e);
         }
-
-        if (matchRepo.existByProfileId(req.toProfileId())) {
-            System.err.println("Match already exist for profile id: [ " + req.fromProfileId() + " ]");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
-        }
-
-        Conversation conversation = new Conversation(UUID.randomUUID().toString(), req.fromProfileId(), new ArrayList<>());
-        conversationRepo.save(conversation);
-
-        Match match = new Match(UUID.randomUUID().toString(), new Date(), req.fromProfileId(), req.toProfileId(), conversation.id());
-        matchRepo.save(match);
-
-        return ResponseEntity.ok(match);
+        return ResponseEntity.ok("Match id: "+ profile.id() + " deleted");
     }
 
-    @DeleteMapping(value = "/matches/del")
+    @DeleteMapping(value = "/matches/delete-all")
     public ResponseEntity<String> delAllMessages() {
         matchRepo.deleteAll();
         return ResponseEntity.ok("All matches deleted");
