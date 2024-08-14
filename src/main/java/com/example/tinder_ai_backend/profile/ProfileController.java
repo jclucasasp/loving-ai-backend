@@ -26,7 +26,13 @@ public class ProfileController {
         }));
     }
 
-    @GetMapping("/profile")
+    @GetMapping(value = "/profile/id")
+    public ResponseEntity<Profile> getProfileById(@RequestBody Profile profile) {
+        return ResponseEntity.ok(profileRepo.findById(profile.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found for id: "+profile.id())));
+    }
+
+    @PostMapping("/profile/name")
     public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
         System.out.println(req.firstName());
         if (req.firstName() == null || req.firstName().isBlank()) {
