@@ -7,8 +7,8 @@ import java.util.Optional;
 
 public interface ConversationRepo extends MongoRepository<Conversation, String> {
 
-    @Query("{fromProfileId:?0}")
-    Optional<Conversation> findByProfileId(String profileId);
+    @Query("{$and:[{'fromProfileId':?0},{'toProfileId':?1}]}")
+    Optional<Conversation> findByFromTo(String fromProfileId, String toProfileId);
 }
 
 

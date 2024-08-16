@@ -53,4 +53,9 @@ public class ProfileController {
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
     }
+
+    @GetMapping("/profile/index/stats")
+    public void getProfileStats() {
+
+    }
 }

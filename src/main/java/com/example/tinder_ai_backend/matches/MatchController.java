@@ -13,8 +13,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
-@AllArgsConstructor
 @RestController
+@AllArgsConstructor
 public class MatchController {
 
     private final MatchRepo matchRepo;
@@ -32,7 +32,7 @@ public class MatchController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
 
-        Conversation conversation = new Conversation(UUID.randomUUID().toString(), req.fromProfileId(), new ArrayList<>());
+        Conversation conversation = new Conversation(UUID.randomUUID().toString(), req.fromProfileId(), req.toProfileId(), new ArrayList<>());
         conversationRepo.save(conversation);
 
         Match match = new Match(UUID.randomUUID().toString(), new Date(), req.fromProfileId(), req.toProfileId(), conversation.id());
