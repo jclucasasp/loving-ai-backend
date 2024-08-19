@@ -68,7 +68,7 @@ public class ConversationController {
 
         Conversation conversation = conversationRepo.findById(match.conversationId())
                 .orElseThrow(() -> {
-                    System.err.println("Unable to find conversation with id: [ " +  match.conversationId() + " ]");
+                    System.err.println("Unable to find conversation with id: [ " + match.conversationId() + " ]");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         return ResponseEntity.ok(Optional.of(conversation));

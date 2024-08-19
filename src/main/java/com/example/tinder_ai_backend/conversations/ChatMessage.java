@@ -10,4 +10,5 @@ public record ChatMessage(
         @Indexed(name = "ChatMessage-createDate-idx")
         Date createDate,
         String messageText
-) {}
+) {
+}
