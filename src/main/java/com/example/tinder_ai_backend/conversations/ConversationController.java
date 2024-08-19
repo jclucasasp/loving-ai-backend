@@ -30,9 +30,9 @@ public class ConversationController {
     @PostMapping(path = "/conversation/add/{conversationId}")
     public ResponseEntity<Optional<Conversation>> addMessage(@PathVariable("conversationId") String conversationId, @RequestBody ChatMessage message) {
 
-        if (message.toProfile() == null || message.toProfile().isBlank()) {
-            System.err.println("Profile id is blank!");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "conversationId is blank or missing");
+        if (conversationId.isBlank() || conversationId.isEmpty() || message.messageText().isEmpty() || message.messageText().isBlank()) {
+            System.err.println("No message text or conversation id");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No conversationId and or message text");
         }
 
         Optional<Conversation> conversation = Optional.ofNullable(conversationRepo.findById(conversationId).orElseThrow(() -> {
