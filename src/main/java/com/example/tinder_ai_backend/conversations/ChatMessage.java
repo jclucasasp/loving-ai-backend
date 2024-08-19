@@ -2,13 +2,12 @@ package com.example.tinder_ai_backend.conversations;
 
 import org.springframework.data.mongodb.core.index.Indexed;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 public record ChatMessage(
-        String messageText,
-        @Indexed(name="toProfile-idx")
-        String toProfile,
-        @Indexed(name = "messageTime-idx")
-        LocalDateTime messageTime
-) {
-}
+        @Indexed(name = "ChatMessage-id-idx")
+        String id,
+        @Indexed(name = "ChatMessage-createDate-idx")
+        Date createDate,
+        String messageText
+) {}

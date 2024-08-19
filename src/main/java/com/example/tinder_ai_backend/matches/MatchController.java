@@ -23,7 +23,7 @@ public class MatchController {
 
     @PostMapping(value = "/match/create")
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
-        if (req == null || req.fromProfileId().isEmpty() || req.toProfileId().isEmpty()) {
+        if (req == null || req.fromProfileId().isBlank() || req.toProfileId().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body unreadable");
         }
 
@@ -32,7 +32,7 @@ public class MatchController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
 
-        Conversation conversation = new Conversation(UUID.randomUUID().toString(), req.fromProfileId(), req.toProfileId(), new ArrayList<>());
+        Conversation conversation = new Conversation(UUID.randomUUID().toString(), new ArrayList<>());
         conversationRepo.save(conversation);
 
         Match match = new Match(UUID.randomUUID().toString(), new Date(), req.fromProfileId(), req.toProfileId(), conversation.id());
