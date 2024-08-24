@@ -6,4 +6,5 @@ import org.springframework.data.mongodb.repository.Query;
 public interface UserRepo extends MongoRepository<User, String> {
     @Query("{'email':?0}")
     User getUserByEmail(String email);
+    Boolean existsAllByEmail(String email);
 }
