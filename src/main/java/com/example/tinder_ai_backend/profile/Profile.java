@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 
 public record Profile(
         @Indexed(name = "ProfileId-idx")
-        String id,
+        String userId,
         String firstName,
         String lastName,
         int age,
@@ -14,5 +14,5 @@ public record Profile(
         String bio,
         String imageUrl,
         String myersBriggsPersonalityType
-)
-{}
+) {
+}

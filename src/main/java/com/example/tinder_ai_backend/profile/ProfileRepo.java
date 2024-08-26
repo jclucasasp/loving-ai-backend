@@ -12,6 +12,9 @@ public interface ProfileRepo extends MongoRepository<Profile, String> {
     @Query("{'firstName': ?0}")
     Optional<Profile> getProfileByFirstName(String firstName);
 
+    @Query("{'userId':?0}")
+    Optional<Profile> getProfileByUserId(String userId);
+
     @Aggregation(pipeline = {"{$sample:{size:1}}"})
     Profile getRandomProfile();
 }

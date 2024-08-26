@@ -6,7 +6,7 @@ import java.util.List;
 
 public record Conversation(
         @Indexed(name = "Conversation-id-idx")
-        String id,
+        String matchedId,
         List<ChatMessage> messages
 ) {
 }
