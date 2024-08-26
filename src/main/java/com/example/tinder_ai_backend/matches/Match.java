@@ -6,9 +6,8 @@ import java.util.Date;
 
 public record Match(
         String id,
-        Date createDate,
+        Date matchedDate,
         @Indexed(name = "MatchFromProfileId-idx")
-        String fromProfileId,
-        String toProfileId,
-        String conversationId
+        String profileId,
+        String toProfileId
 ){}

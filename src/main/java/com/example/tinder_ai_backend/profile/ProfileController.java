@@ -18,7 +18,7 @@ public class ProfileController {
         this.profileRepo = profileRepo;
     }
 
-    @GetMapping("/profiles")
+    @GetMapping("/profile/all")
     public ResponseEntity<List<Profile>> getAllProfiles() {
         return ResponseEntity.ok(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
             System.err.println("No profiles found...");
@@ -28,8 +28,18 @@ public class ProfileController {
 
     @GetMapping(value = "/profile/id")
     public ResponseEntity<Profile> getProfileById(@RequestBody Profile profile) {
-        return ResponseEntity.ok(profileRepo.findById(profile.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found for id: "+profile.id())));
+        return ResponseEntity.ok(profileRepo.findById(profile.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found for id: "+profile.userId())));
+    }
+
+    @DeleteMapping(path = "/profile/id")
+    public ResponseEntity<String> deleteProfileById(@RequestBody Profile profile) {
+
+        if(!profileRepo.existsById(profile.userId())) {
+            System.err.println("No user exist for user id: [ " + profile.userId() + " ]");
+        }
+        profileRepo.deleteById(profile.userId());
+        return ResponseEntity.ok("User deleted");
     }
 
     @PostMapping("/profile/name")

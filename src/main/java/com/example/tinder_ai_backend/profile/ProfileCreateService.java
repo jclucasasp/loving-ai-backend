@@ -31,4 +31,9 @@ public class ProfileCreateService {
             System.out.println("New profiles uploaded and ready to go!");
         }
     }
+
+    public void deleteAllProfiles () {
+        profileRepo.deleteAll();
+        System.out.println("All profiles deleted");
+    }
 }

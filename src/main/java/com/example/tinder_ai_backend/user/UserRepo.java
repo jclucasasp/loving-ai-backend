@@ -4,16 +4,18 @@ import org.springframework.data.mongodb.repository.ExistsQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.util.List;
+import java.util.Optional;
+
 public interface UserRepo extends MongoRepository<User, String> {
-    @Query("{'email':?0}")
-    User getUserByEmail(String email);
+    @Query(value = "{'email':?0}", fields = "{'id':1, 'email':1, 'create_date':1, 'end_date':1, 'passwordResetDate':1}")
+    Optional<User> getUserByEmail(String email);
+
+    @Query(value = "{'userId':?*}", fields = "{'id':1, 'email':1, 'create_date':1, 'end_date':1, 'passwordResetDate':1}")
+    Optional<List<User>> getAll();
+
+    @ExistsQuery("{'email':?0}")
     Boolean existsAllByEmail(String email);
-
-    @ExistsQuery("{'sessionId':?0}")
-    Boolean sessionExistById(String sessionId);
-
-    @Query("{'profileId':?0}")
-    User getUserByProfileId(String profileId);
 }
 
 

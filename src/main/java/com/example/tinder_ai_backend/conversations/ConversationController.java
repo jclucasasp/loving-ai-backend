@@ -28,25 +28,30 @@ public class ConversationController {
     }
 
     @PostMapping(path = "/conversation/add/{conversationId}")
-    public ResponseEntity<Optional<Conversation>> addMessage(@PathVariable("conversationId") String conversationId, @RequestBody ChatMessage message) {
+    public ResponseEntity<Conversation> addMessage(@PathVariable("conversationId") String conversationId, @RequestBody ChatMessage message) {
 
         if (conversationId.isBlank() || conversationId.isEmpty() || message == null || message.messageText().isEmpty()) {
             System.err.println("No message text or conversation id");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No conversationId and or message text");
         }
 
-        Optional<Conversation> conversation = Optional.of(conversationRepo.findById(conversationId))
+        Conversation conversation = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> {
                     System.err.println("Unable to find conversation by id: [ " + conversationId + " ]");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find conversation by id");
                 });
 
-        return ResponseEntity.of(Optional.of(conversation.map((m) -> {
-            m.messages().add(new ChatMessage(UUID.randomUUID().toString(), new Date(), message.messageText()));
-            conversationRepo.save(m);
-            return m;
-        })));
+        Match match = matchRepo.findById(conversationId).orElseThrow(() -> {
+            System.err.println("Unable to find match for conversation id: [ " + conversationId + " ]");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+        });
 
+        conversation.messages().add(
+                new ChatMessage(UUID.randomUUID().toString(), conversation.matchedId(), match.profileId(), match.toProfileId(), new Date(), message.messageText())
+        );
+        conversationRepo.save(conversation);
+
+        return ResponseEntity.ok(conversation);
     }
 
     @GetMapping(path = "/conversation/find/{conversationId}")
@@ -60,15 +65,15 @@ public class ConversationController {
 
     @PostMapping(path = "/conversation/from-to", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Optional<Conversation>> getConversationFromTo(@RequestBody Match req) {
-        Match match = matchRepo.findByFromTo(req.fromProfileId(), req.toProfileId())
+        Match match = matchRepo.findByFromTo(req.profileId(), req.toProfileId())
                 .orElseThrow(() -> {
                     System.err.println("Unable to find conversation for match: \n" + req);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
 
-        Conversation conversation = conversationRepo.findById(match.conversationId())
+        Conversation conversation = conversationRepo.findById(match.profileId())
                 .orElseThrow(() -> {
-                    System.err.println("Unable to find conversation with id: [ " +  match.conversationId() + " ]");
+                    System.err.println("Unable to find conversation with id: [ " + match.profileId() + " ]");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         return ResponseEntity.ok(Optional.of(conversation));

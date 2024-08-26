@@ -26,6 +26,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
 //        ChatResponse call = chatClient.call(prompt);
 //        String content = call.getResult().getOutput().getContent();
 //        System.out.println(content);
+//        profileCreateService.deleteAllProfiles();
 
     }
 }
