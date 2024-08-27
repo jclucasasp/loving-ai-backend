@@ -12,7 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 @AllArgsConstructor
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+//@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 public class ConversationController {
 

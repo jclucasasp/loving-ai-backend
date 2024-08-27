@@ -14,9 +14,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 @RestController
 public class UserController {
 
@@ -88,9 +87,7 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
-        Optional<UserSession> userSessionFound = sessionRepo.getUserSessionByUserId(userFound.id());
-
-        if (userSessionFound.isPresent() && userSessionFound.get().sessionId() != null) {
+        if (userFound.active()) {
             System.err.println("User already logged in");
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already active");
         }
@@ -100,8 +97,10 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
 
-        UserSession userSession = new UserSession(UUID.randomUUID().toString(), userFound.id(), new Date());
-        sessionRepo.save(userSession);
+        UserSession session = new UserSession(userFound.id(), new Date(), null);
+        sessionRepo.save(session);
+
+        userRepo.findFirstByIdAndUpdate(userFound.id(), true);
 
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> {
@@ -111,18 +110,22 @@ public class UserController {
         );
     }
 
-    // TODO: implement a session id  and userSessionId to be able to update the current session
     @PostMapping(path = "/user/logout")
-    public ResponseEntity<String> userLogout(@RequestBody UserSession req) {
+    public ResponseEntity<String> userLogout(@RequestBody User req) {
         if (req == null) {
             System.err.println("User body empty");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User body empty");
         }
 
-        UserSession foundUserSession = sessionRepo.getUserSessionByUserId(req.userId()).orElseThrow(() -> {
-            System.err.println("No user session");
+        User userFound = userRepo.findById(req.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        userRepo.findFirstByIdAndUpdate(userFound.id(), false);
+
+        UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow(() -> {
+            System.err.println("No session found");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
+
+        sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
 
         return ResponseEntity.ok("User logged out successfully");
     }
