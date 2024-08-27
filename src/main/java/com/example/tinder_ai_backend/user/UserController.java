@@ -4,6 +4,8 @@ import com.example.tinder_ai_backend.profile.Profile;
 import com.example.tinder_ai_backend.profile.ProfileRepo;
 import com.example.tinder_ai_backend.session.UserSession;
 import com.example.tinder_ai_backend.session.UserSessionRepo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -15,9 +17,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*")
 @RestController
 public class UserController {
+
+    private static final Logger logger = LogManager.getLogger(UserController.class);
 
     private final UserRepo userRepo;
     private final ProfileRepo profileRepo;
@@ -35,23 +39,27 @@ public class UserController {
     @GetMapping(path = "/user/{email}", params = "email")
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
         if (email.isBlank()) {
+            logger.debug("No email address in path search params...");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please include a valid email address");
         }
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
-            System.err.println("No user found for email: [ " + email + " ]");
+            logger.debug("No user found for email: [ {} ]", email);
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
         }));
     }
 
     @GetMapping(path = "/user/all")
     ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> {
+            logger.debug("No users found...");
+            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }));
     }
 
     @PostMapping(path = "/user/create")
     ResponseEntity<Optional<User>> createNewUser(@RequestBody NewUser newUser) {
         if (userRepo.existsAllByEmail(newUser.email())) {
-            System.err.println("Email : " + newUser.email() + " already exist...");
+            logger.debug("Email : {} already exist...", newUser.email());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
@@ -78,22 +86,22 @@ public class UserController {
     public ResponseEntity<Profile> userLogin(@RequestBody User req) {
         User userFound = userRepo.getUserByEmail(req.email())
                 .orElseThrow(() -> {
-                    System.err.println("No user found");
+                    logger.debug("No user found");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
 
         if (userFound == null) {
-            System.err.println("User not found for email: [ " + req.email() + " ] ");
+            logger.debug("User not found for email: [ {} ] ", req.email());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
         if (userFound.active()) {
-            System.err.println("User already logged in");
+            logger.debug("User already logged in");
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already active");
         }
 
         if (!encoder.matches(req.password(), userFound.password())) {
-            System.err.println("Unauthorised");
+            logger.debug("Unauthorised");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
 
@@ -104,7 +112,7 @@ public class UserController {
 
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> {
-                    System.err.println("Unable to find profile for user");
+                    logger.debug("Unable to find profile for user");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -113,7 +121,7 @@ public class UserController {
     @PostMapping(path = "/user/logout")
     public ResponseEntity<String> userLogout(@RequestBody User req) {
         if (req == null) {
-            System.err.println("User body empty");
+            logger.debug("User body empty");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User body empty");
         }
 
@@ -121,7 +129,7 @@ public class UserController {
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
         UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow(() -> {
-            System.err.println("No session found");
+            logger.debug("No session found");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
