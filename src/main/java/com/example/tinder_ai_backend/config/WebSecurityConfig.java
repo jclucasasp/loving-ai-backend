@@ -40,8 +40,7 @@ public class WebSecurityConfig {
                     requests.anyRequest().authenticated();
                 })
                 .sessionManagement(session -> {
-                    session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
-                    session.maximumSessions(1);
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 })
                 .httpBasic(Customizer.withDefaults())
                 .build();
