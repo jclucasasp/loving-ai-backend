@@ -28,7 +28,7 @@ public class UserController {
     private final UserSessionRepo sessionRepo;
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, PasswordEncoder encoder, UserSessionRepo sessionRepo) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.sessionRepo = sessionRepo;

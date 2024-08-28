@@ -25,7 +25,6 @@ public class ProfileCreateService {
         this.userRepo = userRepo;
     }
 
-    //TODO: Generate users for each profile
     public void createProfiles() {
         Gson gson = new Gson();
         try {
@@ -36,9 +35,7 @@ public class ProfileCreateService {
 
             logger.info("Creating users from current profiles...");
             List<User> userList = new ArrayList<>();
-            profileList.forEach((profile -> {
-                userList.add(new User(profile.firstName().concat(profile.lastName().concat("@gmail.com")), "password"));
-            }));
+            profileList.forEach((profile -> userList.add(new User(profile.firstName().concat(profile.lastName().concat("@gmail.com")), "password"))));
 
             if (userList.isEmpty()) {
                 logger.error("Unable to populate a list of users from profiles list...");

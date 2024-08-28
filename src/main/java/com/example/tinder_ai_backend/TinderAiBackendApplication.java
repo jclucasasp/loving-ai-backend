@@ -1,6 +1,5 @@
 package com.example.tinder_ai_backend;
 
-import com.example.tinder_ai_backend.profile.ProfileCreateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -12,7 +11,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
 
 //    private final OllamaChatModel chatClient;
 
-    private final ProfileCreateService profileCreateService;
+//    private final ProfileCreateService profileCreateService;
 
     public static void main(String[] args) {
         SpringApplication.run(TinderAiBackendApplication.class, args);
