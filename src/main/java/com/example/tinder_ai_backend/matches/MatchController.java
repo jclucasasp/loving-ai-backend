@@ -35,12 +35,11 @@ public class MatchController {
             logger.debug("Match already exist for profile id: [ {} ]", req.profileId());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
-
-        Conversation conversation = new Conversation(UUID.randomUUID().toString(), new ArrayList<>());
-        conversationRepo.save(conversation);
-
         Match match = new Match(UUID.randomUUID().toString(), new Date(), req.profileId(), req.toProfileId());
         matchRepo.save(match);
+
+        Conversation conversation = new Conversation(match.id(), new ArrayList<>());
+        conversationRepo.save(conversation);
 
         return ResponseEntity.ok(match);
     }
@@ -71,9 +70,13 @@ public class MatchController {
 
     @DeleteMapping(value = "/match/delete-by-id")
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
-        System.out.printf("Incoming delete request for id: " + profile.userId());
+        Match matchFound = matchRepo.findByProfileId(profile.userId())
+                .orElseThrow(() -> {
+                    logger.error("Unable to find match for profile id: [ {} ]", profile.userId());
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND);
+                });
         try {
-            matchRepo.deleteById(matchRepo.findByProfileId(profile.userId()).id());
+            matchRepo.deleteById(matchFound.id());
         } catch (Exception e) {
             logger.error("Unable to delete profile id: [ {} ]", profile.userId());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: " + profile.userId(), e);

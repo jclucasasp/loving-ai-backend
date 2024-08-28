@@ -1,13 +1,15 @@
 package com.example.tinder_ai_backend.conversations;
 
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.FieldType;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.util.Date;
 
 public record ChatMessage(
-        String id,
         @Indexed(name = "ChatMessage-id-idx")
-        String conversationId,
+        @MongoId(FieldType.STRING)
+        String id,
         @Indexed(name = "SenderProfile-id-idx")
         String senderProfileId,
         @Indexed(name = "ReceiverProfile-id-idx")

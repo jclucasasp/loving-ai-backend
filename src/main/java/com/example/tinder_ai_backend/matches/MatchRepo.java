@@ -8,12 +8,12 @@ import java.util.Optional;
 
 public interface MatchRepo extends MongoRepository<Match, String> {
 
-    @ExistsQuery("{'toProfileId': ?0}")
+    @ExistsQuery("{'profileId': ?0}")
     Boolean existByProfileId(String profileId);
 
     @Query("{'toProfileId':?0}")
-    Match findByProfileId(String toProfileId);
+    Optional<Match> findByProfileId(String toProfileId);
 
-    @Query("{$and:[{'fromProfileId':?0},{'toProfileId':?1}]}")
-    Optional<Match> findByFromTo(String fromProfileId, String toProfileId);
+    @Query("{$and:[{'profileId':?0},{'toProfileId':?1}]}")
+    Optional<Match> findByFromTo(String profileId, String toProfileId);
 }

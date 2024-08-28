@@ -2,9 +2,12 @@ package com.example.tinder_ai_backend.profile;
 
 
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.FieldType;
+import org.springframework.data.mongodb.core.mapping.MongoId;
 
 public record Profile(
         @Indexed(name = "ProfileId-idx")
+        @MongoId(FieldType.STRING)
         String userId,
         String firstName,
         String lastName,

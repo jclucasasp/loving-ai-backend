@@ -96,8 +96,10 @@ public class UserController {
         }
 
         if (userFound.active()) {
-            logger.debug("User already logged in");
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already active");
+            logger.debug("User already logged in, returning profile...");
+            return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND))
+            );
         }
 
         if (!encoder.matches(req.password(), userFound.password())) {

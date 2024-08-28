@@ -10,8 +10,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @RequiredArgsConstructor
 public class TinderAiBackendApplication implements CommandLineRunner {
 
-//    private final ProfileRepo profileRepo;
-//    private final ConversationRepo conversationRepo;
 //    private final OllamaChatModel chatClient;
 
     private final ProfileCreateService profileCreateService;
@@ -27,6 +25,11 @@ public class TinderAiBackendApplication implements CommandLineRunner {
 //        String content = call.getResult().getOutput().getContent();
 //        System.out.println(content);
 //        profileCreateService.deleteAllProfiles();
+//        conversationRepo.deleteAll();
+//        matchRepo.deleteAll();
+//        userRepo.deleteAll();
+//        userSessionRepo.deleteAll();
+
 
     }
 }
