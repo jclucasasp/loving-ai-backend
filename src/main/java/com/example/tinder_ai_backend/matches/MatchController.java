@@ -27,6 +27,11 @@ public class MatchController {
     @PostMapping(path = "/match/create")
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
 
+        if (!profileRepo.existsProfileByUserId(req.profileId())) {
+            logger.error("No user found for id: [ {} ]",req.profileId());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
         if (matchRepo.existByProfileId(req.toProfileId())) {
             logger.debug("Match already exist for profile id: [ {} ]", req.profileId());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
