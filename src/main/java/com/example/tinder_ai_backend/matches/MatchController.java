@@ -24,35 +24,42 @@ public class MatchController {
     private final ConversationRepo conversationRepo;
     private final ProfileRepo profileRepo;
 
-    @PostMapping(value = "/match/create")
+    @PostMapping(path = "/match/create")
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
-        if (req == null || req.profileId().isBlank() || req.toProfileId().isBlank()) {
-            logger.debug("No body params...");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Body unreadable");
-        }
 
         if (matchRepo.existByProfileId(req.toProfileId())) {
             logger.debug("Match already exist for profile id: [ {} ]", req.profileId());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
-        Match match = new Match(UUID.randomUUID().toString(), new Date(), req.profileId(), req.toProfileId());
-        matchRepo.save(match);
 
-        Conversation conversation = new Conversation(match.id(), new ArrayList<>());
-        conversationRepo.save(conversation);
+        /* This is only for AI to automatch.
+        * If real world application you would have to create toMatch logic
+        * */
+        Match matchFrom = new Match(UUID.randomUUID().toString(), new Date(), req.profileId(), req.toProfileId());
+        matchRepo.save(matchFrom);
+        Match matchTo = new Match(UUID.randomUUID().toString(), new Date(), req.toProfileId(), req.profileId());
+        matchRepo.save(matchTo);
 
-        return ResponseEntity.ok(match);
+        Conversation conversationFrom = new Conversation(matchFrom.id(), new ArrayList<>());
+        conversationRepo.save(conversationFrom);
+        Conversation conversationTo = new Conversation(matchTo.id(), new ArrayList<>());
+        conversationRepo.save(conversationTo);
+
+        return ResponseEntity.ok(matchFrom);
     }
 
-    @GetMapping(value = "/matches/all")
-    public ResponseEntity<List<Match>> findAll() {
-        return ResponseEntity.ok(Optional.of(matchRepo.findAll()).orElseThrow(() -> {
-            logger.debug("No matches found...");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }));
+    @PostMapping(path = "/matches/all")
+    public ResponseEntity<List<Match>> findAll(@RequestBody Profile req) {
+        List<Match> matchList = matchRepo.findAllProfileId(req.userId())
+        .orElseThrow(() -> {
+           logger.error("Unable to find matches for profile id: [ {} ]",req.userId());
+           return new ResponseStatusException(HttpStatus.NOT_FOUND);
+        });
+
+        return ResponseEntity.ok(matchList);
     }
 
-    @PostMapping(value = "/match/profiles")
+    @PostMapping(path = "/match/profiles")
     public ResponseEntity<List<Optional<Profile>>> getAllProfilesById(@RequestBody Match[] req) {
         List<Optional<Profile>> profilesById = new ArrayList<>();
 
@@ -68,7 +75,7 @@ public class MatchController {
         return ResponseEntity.ok(profilesById);
     }
 
-    @DeleteMapping(value = "/match/delete-by-id")
+    @DeleteMapping(path = "/match/delete-by-id")
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
         Match matchFound = matchRepo.findByProfileId(profile.userId())
                 .orElseThrow(() -> {
@@ -84,7 +91,7 @@ public class MatchController {
         return ResponseEntity.ok("Match id: " + profile.userId() + " deleted");
     }
 
-    @DeleteMapping(value = "/matches/delete-all")
+    @DeleteMapping(path = "/matches/delete-all")
     public ResponseEntity<String> delAllMessages() {
         matchRepo.deleteAll();
         logger.debug("All matches deleted...");
