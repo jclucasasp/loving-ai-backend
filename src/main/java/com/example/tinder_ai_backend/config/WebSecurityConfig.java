@@ -33,9 +33,7 @@ public class WebSecurityConfig {
                     requests.requestMatchers("/user/**", "/swagger-ui.html").permitAll();
                     requests.anyRequest().authenticated();
                 })
-                .sessionManagement(session -> {
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                })
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }

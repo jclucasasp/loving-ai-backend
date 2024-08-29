@@ -38,10 +38,6 @@ public class UserController {
 
     @GetMapping(path = "/user/{email}", params = "email")
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
-        if (email.isBlank()) {
-            logger.debug("No email address in path search params...");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please include a valid email address");
-        }
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
             logger.debug("No user found for email: [ {} ]", email);
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
@@ -66,14 +62,14 @@ public class UserController {
         String hashedPassword = encoder.encode(newUser.password());
 
         User user = new User(newUser.email(), hashedPassword);
-        User createdUser = userRepo.save(user);
+        userRepo.save(user);
 
         Profile newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
                 newUser.ethnicity(), newUser.gender(), newUser.bio(), newUser.imageUrl(), newUser.myersBriggsPersonalityType());
 
         profileRepo.save(newProfile);
 
-        return ResponseEntity.ok(userRepo.findById(createdUser.id()));
+        return ResponseEntity.ok(userRepo.findById(user.id()));
     }
 
     @DeleteMapping(path = "/user/delete")
@@ -90,15 +86,10 @@ public class UserController {
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
 
-        if (userFound == null) {
-            logger.debug("User not found for email: [ {} ] ", req.email());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-
         if (userFound.active()) {
             logger.debug("User already logged in, returning profile...");
             return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONTINUE))
             );
         }
 
