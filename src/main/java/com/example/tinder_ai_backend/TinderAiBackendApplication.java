@@ -1,17 +1,21 @@
 package com.example.tinder_ai_backend;
 
 import com.example.tinder_ai_backend.lib.DataBaseService;
+import com.example.tinder_ai_backend.responses.ResponseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.util.regex.Pattern;
+
 @SpringBootApplication
 @RequiredArgsConstructor
 public class TinderAiBackendApplication implements CommandLineRunner {
 
-    //    private final OllamaChatModel chatClient;
+
     private final DataBaseService dataBaseHelper;
+    private final ResponseService responseService;
 
     public static void main(String[] args) {
         SpringApplication.run(TinderAiBackendApplication.class, args);
@@ -20,9 +24,7 @@ public class TinderAiBackendApplication implements CommandLineRunner {
     public void run(String... args) {
 //        dataBaseHelper.purgeData();
 //        dataBaseHelper.seedDataBase();
-//        Prompt prompt = new Prompt("Who are you?");
-//        ChatResponse call = chatClient.call(prompt);
-//        String content = call.getResult().getOutput().getContent();
-//        System.out.println(content);
+//        String res = responseService.getResponse("Tell me more about yourself?");
+//        System.out.println(res);
     }
 }
