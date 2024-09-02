@@ -1,21 +1,29 @@
 package com.example.tinder_ai_backend.responses;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@EnableAsync
 public class ResponseService {
 
     private static final Map<String, String> WITTY_RESPONSES = new HashMap<>();
+    private static final Logger logger = LogManager.getLogger(ResponseService.class);
     static Pattern badPattern;
 
     static {
@@ -27,33 +35,33 @@ public class ResponseService {
         badPattern = Pattern.compile("sex|intercourse|sodomy|kill|drown|electrocute|penetrate");
     }
 
+    private final ThreadPoolTaskExecutor chatResponseExecutor;
     private final OllamaChatModel chatClient;
 
-    public String getResponse(String input) {
-        Matcher badMatcher = badPattern.matcher(input);
+    @Async("chatResponseExecutor")
+    public Future<String> generateChatResponse(Prompt prompt) {
+        logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
+        Matcher badMatcher = badPattern.matcher(prompt.getContents());
 
         if (badMatcher.find()) {
-            return "You're such a weirdo...";
+            return CompletableFuture.completedFuture("You're such a weirdo...");
         }
 
-        String normalisedInput = normaliseInput(input);
+        String normalisedInput = normaliseInput(prompt.getContents());
 
         for (Map.Entry<String, String> entry : WITTY_RESPONSES.entrySet()) {
-            if (Pattern.matches(entry.getKey(), normalisedInput)) {
-                return entry.getValue();
+            if (Pattern.compile(entry.getKey()).matcher(normalisedInput).matches()) {
+                return CompletableFuture.completedFuture(entry.getValue());
             }
         }
+        return getResponse(prompt);
+    }
 
-        Prompt prompt = new Prompt(input);
-        ChatResponse chatResponse = chatClient.call(prompt);
-        return chatResponse.getResult().getOutput().getContent();
+    private Future<String> getResponse(Prompt prompt) {
+        return chatResponseExecutor.submit(() -> chatClient.call(prompt.getContents()));
     }
 
     private String normaliseInput(String input) {
         return input.toLowerCase().replaceAll("[\\s\\p{Punct}]", "");
-    }
-
-    public void printMap() {
-        WITTY_RESPONSES.forEach(System.out::printf);
     }
 }

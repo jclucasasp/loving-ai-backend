@@ -3,11 +3,13 @@ package com.example.tinder_ai_backend;
 import com.example.tinder_ai_backend.lib.DataBaseService;
 import com.example.tinder_ai_backend.responses.ResponseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.regex.Pattern;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @SpringBootApplication
 @RequiredArgsConstructor
@@ -24,7 +26,23 @@ public class TinderAiBackendApplication implements CommandLineRunner {
     public void run(String... args) {
 //        dataBaseHelper.purgeData();
 //        dataBaseHelper.seedDataBase();
-//        String res = responseService.getResponse("Tell me more about yourself?");
-//        System.out.println(res);
+        Future<String> future = responseService.generateChatResponse(new Prompt("Hows you going shiela?"));
+        Future<String> future1 = responseService.generateChatResponse(new Prompt("Whats your name?"));
+        Future<String> future2 = responseService.generateChatResponse(new Prompt("What can you do?"));
+        Future<String> future3 = responseService.generateChatResponse(new Prompt("What are you doing?"));
+        Future<String> future4 = responseService.generateChatResponse(new Prompt("Do you want me to penetrate you?"));
+        Future<String> future5 = responseService.generateChatResponse(new Prompt("I love you!"));
+
+        try {
+            System.out.println(future.get());
+            System.out.println(future1.get());
+            System.out.println(future2.get());
+            System.out.println(future3.get());
+            System.out.println(future4.get());
+            System.out.println(future5.get());
+
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println(e);
+        }
     }
 }
