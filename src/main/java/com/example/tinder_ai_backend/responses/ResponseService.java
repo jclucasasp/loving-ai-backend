@@ -42,7 +42,6 @@ public class ResponseService {
             if (Pattern.matches(entry.getKey(), normalisedInput)) {
                 return entry.getValue();
             }
-
         }
 
         Prompt prompt = new Prompt(input);
