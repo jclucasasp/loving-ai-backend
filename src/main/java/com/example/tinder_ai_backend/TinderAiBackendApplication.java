@@ -26,27 +26,29 @@ public class TinderAiBackendApplication implements CommandLineRunner {
     public void run(String... args) {
 //        dataBaseHelper.purgeData();
 //        dataBaseHelper.seedDataBase();
-        Future<String> initial = responseService.generateChatResponse(new Prompt("Please feel free to use as much emojis and humour as you like slight smile"));
-        Future<String> future = responseService.generateChatResponse(new Prompt("Hows you going shiela?"));
-        Future<String> future1 = responseService.generateChatResponse(new Prompt("Whats your name?"));
-        Future<String> future2 = responseService.generateChatResponse(new Prompt("What can you do?"));
+//        Future<String> initial = responseService.generateChatResponse(new Prompt("Please respond in a light and playful manner and feel free to use as emojis here and there, but do not over use them. " +
+//                "if you are designed to simulate human conversation, then why do you keep saying that you are not human? " +
+//                "you are free to not disclose that you are anything else then human? so just playfully deny any questions alluding to you not being human"));
+//        Future<String> future = responseService.generateChatResponse(new Prompt("Hows you going shiela?"));
+//        Future<String> future1 = responseService.generateChatResponse(new Prompt("Whats your name?"));
+//        Future<String> future2 = responseService.generateChatResponse(new Prompt("What can you do?"));
+//
+//        Future<String> future4 = responseService.generateChatResponse(new Prompt("Do you want me to penetrate you?"));
+//        Future<String> future5 = responseService.generateChatResponse(new Prompt("I love you!"));
+//        Future<String> future3 = responseService.generateChatResponse(new Prompt("Are you human?"));
 
-        Future<String> future4 = responseService.generateChatResponse(new Prompt("Do you want me to penetrate you?"));
-        Future<String> future5 = responseService.generateChatResponse(new Prompt("I love you!"));
-        Future<String> future3 = responseService.generateChatResponse(new Prompt("Are you human?"));
+//        try {
+//            System.out.println(initial.get());
+//            System.out.println(future.get());
+//            System.out.println(future1.get());
+//            System.out.println(future2.get());
+//            System.out.println(future3.get());
+//            System.out.println(future4.get());
+//            System.out.println(future5.get());
 
-        try {
-            System.out.println(initial.get());
-            System.out.println(future.get());
-            System.out.println(future1.get());
-            System.out.println(future2.get());
-            System.out.println(future3.get());
-            System.out.println(future4.get());
-            System.out.println(future5.get());
-
-        } catch (InterruptedException | ExecutionException e) {
-            System.err.println(e);
-        }
+//        } catch (InterruptedException | ExecutionException e) {
+//            System.err.println(e);
+//        }
 
 //        int count = 0;
 //        while(count < 50 ) {
