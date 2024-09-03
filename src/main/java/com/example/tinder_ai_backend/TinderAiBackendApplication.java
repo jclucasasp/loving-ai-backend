@@ -26,14 +26,17 @@ public class TinderAiBackendApplication implements CommandLineRunner {
     public void run(String... args) {
 //        dataBaseHelper.purgeData();
 //        dataBaseHelper.seedDataBase();
+        Future<String> initial = responseService.generateChatResponse(new Prompt("Please feel free to use as much emojis and humour as you like slight smile"));
         Future<String> future = responseService.generateChatResponse(new Prompt("Hows you going shiela?"));
         Future<String> future1 = responseService.generateChatResponse(new Prompt("Whats your name?"));
         Future<String> future2 = responseService.generateChatResponse(new Prompt("What can you do?"));
-        Future<String> future3 = responseService.generateChatResponse(new Prompt("What are you doing?"));
+
         Future<String> future4 = responseService.generateChatResponse(new Prompt("Do you want me to penetrate you?"));
         Future<String> future5 = responseService.generateChatResponse(new Prompt("I love you!"));
+        Future<String> future3 = responseService.generateChatResponse(new Prompt("Are you human?"));
 
         try {
+            System.out.println(initial.get());
             System.out.println(future.get());
             System.out.println(future1.get());
             System.out.println(future2.get());
@@ -44,5 +47,17 @@ public class TinderAiBackendApplication implements CommandLineRunner {
         } catch (InterruptedException | ExecutionException e) {
             System.err.println(e);
         }
+
+//        int count = 0;
+//        while(count < 50 ) {
+//            try {
+//                Future<String> future = responseService.generateChatResponse(new Prompt("What can you do?"));
+//                System.out.println(future.get());
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//            count++;
+//            System.out.println("Loop number: [ "+count+" ]");
+//        }
     }
 }
