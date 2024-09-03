@@ -30,7 +30,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests -> {
-                    requests.requestMatchers("/user/**", "/swagger-ui.html").permitAll();
+                    requests.requestMatchers("/user/**", "/swagger-ui.html", "/images/**").permitAll();
                     requests.anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
