@@ -27,12 +27,12 @@ public class ResponseService {
     static Pattern badPattern;
 
     static {
-        WITTY_RESPONSES.put("areyoua(llm|ai|bot|chatbot|robot)", "Lol, I'm sure not a bot!");
-        WITTY_RESPONSES.put("areyou(evenhuman|evenaperson)", "What a weird question, lol!");
+        WITTY_RESPONSES.put("areyoua(llm|ai|bot|chatbot|robot|human|alien)", "Lol, I'm sure not a bot!");
+        WITTY_RESPONSES.put("areyou(evenhuman|evenaperson|llm|ai|bot|chatbot|robot|human|alien)", "What a weird question, lol!");
         WITTY_RESPONSES.put("amitalkingtoa(llm|ai|bot|chatbot|robot)", "No, you're just talking to yourself and it is only in your mind that you are seeing this message, lol!");
         WITTY_RESPONSES.put("willyoubemy(girlfriend|lover|wife)", "Cool your jets there Tex. I don't know you like that, lol");
-        WITTY_RESPONSES.put("iloveyou.*", "Of course you do, wink");
-        badPattern = Pattern.compile("sex|intercourse|sodomy|kill|drown|electrocute|penetrate");
+        WITTY_RESPONSES.put("iloveyou\\b", "Of course you do, wink");
+        badPattern = Pattern.compile("\\b(?:sex|intercourse|sodomy|kill|drown|electrocute|penetrate)\\b", Pattern.CASE_INSENSITIVE);
     }
 
     private final ThreadPoolTaskExecutor chatResponseExecutor;
@@ -57,7 +57,8 @@ public class ResponseService {
         return getResponse(prompt);
     }
 
-    private Future<String> getResponse(Prompt prompt) {
+    @Async("chatResponseExecutor")
+    protected Future<String> getResponse(Prompt prompt) {
         return chatResponseExecutor.submit(() -> chatClient.call(prompt.getContents()));
     }
 
