@@ -22,8 +22,16 @@ public class ResponseService {
     private final ChatClient chatClient;
 
     @Async("chatResponseExecutor")
-    public Future<String> generateChatResponse(String prompt) {
+    public Future<String> generateChatResponse(Response res) {
         logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
-        return chatResponseExecutor.submit(() -> chatClient.prompt().user(prompt).call().content());
+
+        final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() +" years old and you like the following: " + res.bio();
+
+        return chatResponseExecutor.submit(() -> chatClient
+                .prompt()
+                .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
+                .user(res.messagePrompt())
+                .call()
+                .content());
     }
 }
