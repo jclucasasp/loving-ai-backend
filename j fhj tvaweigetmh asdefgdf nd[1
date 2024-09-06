@@ -1,0 +1,41 @@
+[1mdiff --git a/src/main/java/com/example/tinder_ai_backend/conversations/ChatMessage.java b/src/main/java/com/example/tinder_ai_backend/conversations/ChatMessage.java[m
+[1mindex 01202fe..8db682a 100644[m
+[1m--- a/src/main/java/com/example/tinder_ai_backend/conversations/ChatMessage.java[m
+[1m+++ b/src/main/java/com/example/tinder_ai_backend/conversations/ChatMessage.java[m
+[36m@@ -17,4 +17,5 @@[m [mpublic record ChatMessage([m
+         @Indexed(name = "ChatMessage-createDate-idx")[m
+         Date sendDate,[m
+         String messageText[m
+[31m-) {}[m
+[32m+[m[32m) {[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/main/java/com/example/tinder_ai_backend/conversations/ConversationRepo.java b/src/main/java/com/example/tinder_ai_backend/conversations/ConversationRepo.java[m
+[1mindex 63516fc..52fbb3c 100644[m
+[1m--- a/src/main/java/com/example/tinder_ai_backend/conversations/ConversationRepo.java[m
+[1m+++ b/src/main/java/com/example/tinder_ai_backend/conversations/ConversationRepo.java[m
+[36m@@ -1,15 +1,8 @@[m
+ package com.example.tinder_ai_backend.conversations;[m
+ [m
+ import org.springframework.data.mongodb.repository.MongoRepository;[m
+[31m-import org.springframework.data.mongodb.repository.Query;[m
+[31m-[m
+[31m-import java.util.Optional;[m
+[31m-[m
+ [m
+ public interface ConversationRepo extends MongoRepository<Conversation, String> {[m
+[31m-[m
+[31m-    @Query("{'matchId':?0}")[m
+[31m-    Optional<Conversation> getByMatchId(String matchId);[m
+ }[m
+ [m
+ [m
+[1mdiff --git a/src/main/java/com/example/tinder_ai_backend/matches/MatchRepo.java b/src/main/java/com/example/tinder_ai_backend/matches/MatchRepo.java[m
+[1mindex f60b756..de442a9 100644[m
+[1m--- a/src/main/java/com/example/tinder_ai_backend/matches/MatchRepo.java[m
+[1m+++ b/src/main/java/com/example/tinder_ai_backend/matches/MatchRepo.java[m
+[36m@@ -1,4 +1,5 @@[m
+ package com.example.tinder_ai_backend.matches;[m
+[32m+[m
+ import org.springframework.data.mongodb.repository.ExistsQuery;[m
+ import org.springframework.data.mongodb.repository.MongoRepository;[m
+ import org.springframework.data.mongodb.repository.Query;[m

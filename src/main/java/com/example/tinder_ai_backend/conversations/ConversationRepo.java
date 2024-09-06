@@ -11,5 +11,3 @@ public interface ConversationRepo extends MongoRepository<Conversation, String> 
     @Query("{'matchId':?0}")
     Optional<Conversation> getByMatchId(String matchId);
 }
-
-
