@@ -3,7 +3,7 @@ package com.example.tinder_ai_backend.conversations;
 import com.example.tinder_ai_backend.matches.Match;
 import com.example.tinder_ai_backend.matches.MatchRepo;
 import com.example.tinder_ai_backend.responses.Response;
-import com.example.tinder_ai_backend.responses.ResponseService;
+import com.example.tinder_ai_backend.services.ResponseService;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,9 +1,10 @@
-package com.example.tinder_ai_backend.lib;
+package com.example.tinder_ai_backend.services;
 
 import com.example.tinder_ai_backend.conversations.ConversationRepo;
 import com.example.tinder_ai_backend.matches.MatchRepo;
 import com.example.tinder_ai_backend.profile.Profile;
 import com.example.tinder_ai_backend.profile.ProfileRepo;
+import com.example.tinder_ai_backend.services.interfaces.DataBaseServiceInterface;
 import com.example.tinder_ai_backend.session.UserSessionRepo;
 import com.example.tinder_ai_backend.user.User;
 import com.example.tinder_ai_backend.user.UserRepo;
@@ -21,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class DataBaseService {
+public class DataBaseService implements DataBaseServiceInterface {
 
     private static final Logger logger = LogManager.getLogger(DataBaseService.class);
     private final static String PROFILES_JSON_FILE = "profiles.json";
@@ -42,6 +43,7 @@ public class DataBaseService {
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
+    @Override
     public void purgeData() {
         logger.info("Going to purge data from database...");
         logger.info("Attempting to purge all Sessions...");
@@ -67,6 +69,7 @@ public class DataBaseService {
         logger.info("Database no purged and ready to be seeded...");
     }
 
+    @Override
     public void seedDataBase() {
         logger.info("Attempting to seed database...");
         logger.info("Attempting to read json files and create a list of profiles...");

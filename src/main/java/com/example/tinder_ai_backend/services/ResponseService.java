@@ -1,5 +1,7 @@
-package com.example.tinder_ai_backend.responses;
+package com.example.tinder_ai_backend.services;
 
+import com.example.tinder_ai_backend.responses.Response;
+import com.example.tinder_ai_backend.services.interfaces.ResponseServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -14,7 +16,7 @@ import java.util.concurrent.Future;
 @Service
 @RequiredArgsConstructor
 @EnableAsync
-public class ResponseService {
+public class ResponseService implements ResponseServiceInterface {
 
     private static final Logger logger = LogManager.getLogger(ResponseService.class);
 
@@ -22,10 +24,11 @@ public class ResponseService {
     private final ChatClient chatClient;
 
     @Async("chatResponseExecutor")
+    @Override
     public Future<String> generateChatResponse(Response res) {
         logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
 
-        final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() +" years old and you like the following: " + res.bio();
+        final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() + " years old and you like the following: " + res.bio();
 
         return chatResponseExecutor.submit(() -> chatClient
                 .prompt()

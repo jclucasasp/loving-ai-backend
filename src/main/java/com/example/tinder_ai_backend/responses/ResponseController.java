@@ -1,5 +1,6 @@
 package com.example.tinder_ai_backend.responses;
 
+import com.example.tinder_ai_backend.services.interfaces.ResponseServiceInterface;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 public class ResponseController {
 
     private final static Logger logger = LogManager.getLogger(ResponseController.class);
-    private final ResponseService service;
+    private final ResponseServiceInterface service;
 
     @GetMapping(path = "/response")
     public ResponseEntity<String> getResponse(@RequestBody Response req) throws ExecutionException, InterruptedException {

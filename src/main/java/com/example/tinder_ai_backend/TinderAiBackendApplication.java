@@ -1,23 +1,19 @@
 package com.example.tinder_ai_backend;
 
-import com.example.tinder_ai_backend.lib.DataBaseService;
-import com.example.tinder_ai_backend.responses.ResponseService;
+import com.example.tinder_ai_backend.services.interfaces.DataBaseServiceInterface;
+import com.example.tinder_ai_backend.services.interfaces.ResponseServiceInterface;
 import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @SpringBootApplication
 @RequiredArgsConstructor
 public class TinderAiBackendApplication implements CommandLineRunner {
 
 
-    private final DataBaseService dataBaseHelper;
-    private final ResponseService responseService;
+    private final DataBaseServiceInterface dataBaseHelper;
+    private final ResponseServiceInterface responseService;
 
     public static void main(String[] args) {
         SpringApplication.run(TinderAiBackendApplication.class, args);
