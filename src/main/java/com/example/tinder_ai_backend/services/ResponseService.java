@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 
 @Service
 @RequiredArgsConstructor
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 public class ResponseService implements ResponseServiceInterface {
 
     private static final Logger logger = LogManager.getLogger(ResponseService.class);
