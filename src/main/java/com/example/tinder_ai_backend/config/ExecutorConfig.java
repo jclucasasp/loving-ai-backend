@@ -39,8 +39,8 @@ public class ExecutorConfig {
 
         try (ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
             scheduler.scheduleAtFixedRate(() -> {
-                if (executor.getQueueSize() == queueCap) {
-                    logger.warn("");
+                if (executor.getQueueSize() > (queueCap - 10)) {
+                    logger.warn("Queue size reached or exceeded. Increasing thread core and pool size by a factor of 2!");
                     executor.setCorePoolSize(executor.getCorePoolSize() * 2);
                     executor.setMaxPoolSize(executor.getMaxPoolSize() * 2);
                 }
