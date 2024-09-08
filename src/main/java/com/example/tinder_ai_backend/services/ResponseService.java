@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @Service
@@ -25,16 +27,23 @@ public class ResponseService implements ResponseServiceInterface {
 
     @Async("chatResponseExecutor")
     @Override
-    public Future<String> generateChatResponse(Response res) {
+    public CompletableFuture<String> generateChatResponse(Response res) {
         logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
 
         final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() + " years old and you like the following: " + res.bio();
 
-        return chatResponseExecutor.submit(() -> chatClient
-                .prompt()
-                .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
-                .user(res.messagePrompt())
-                .call()
-                .content());
+        return CompletableFuture.supplyAsync(() -> {
+            Future<String> aiResponse = chatResponseExecutor.submit(() -> chatClient
+                    .prompt()
+                    .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
+                    .user(res.messagePrompt())
+                    .call()
+                    .content());
+            try {
+                return aiResponse.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }, chatResponseExecutor);
     }
 }
