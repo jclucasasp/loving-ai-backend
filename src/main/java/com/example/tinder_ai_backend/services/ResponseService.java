@@ -12,8 +12,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @Service
 @RequiredArgsConstructor
@@ -33,16 +31,16 @@ public class ResponseService implements ResponseServiceInterface {
         final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() + " years old and you like the following: " + res.bio();
 
         return CompletableFuture.supplyAsync(() -> {
-            Future<String> aiResponse = chatResponseExecutor.submit(() -> chatClient
-                    .prompt()
-                    .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
-                    .user(res.messagePrompt())
-                    .call()
-                    .content());
             try {
-                return aiResponse.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+                return chatClient
+                        .prompt()
+                        .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
+                        .user(res.messagePrompt())
+                        .call()
+                        .content();
+            } catch (Exception e) {
+                logger.error("Error generating chat response: ", e);
+                throw new RuntimeException("Failed to generate chat response", e);
             }
         }, chatResponseExecutor);
     }

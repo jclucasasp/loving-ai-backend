@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 
@@ -23,6 +24,7 @@ public class ResponseController {
 
     @GetMapping(path = "/response")
     public ResponseEntity<String> getResponse(@RequestBody Response req) throws ExecutionException, InterruptedException {
-        return ResponseEntity.ok(service.generateChatResponse(req).get());
+        CompletableFuture<String> aiResponse = service.generateChatResponse(req);
+        return ResponseEntity.ok(aiResponse.get());
     }
 }
