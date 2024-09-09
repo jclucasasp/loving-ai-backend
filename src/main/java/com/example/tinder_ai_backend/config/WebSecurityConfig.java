@@ -20,8 +20,8 @@ public class WebSecurityConfig {
 
     @Bean
     public InMemoryUserDetailsManager userDetailsManager() {
-        UserDetails user = User.withUsername("tinderFront")
-                .password(passwordEncoder().encode("tinderFrontPassword"))
+        UserDetails user = User.withUsername("tinder")
+                .password(passwordEncoder().encode("Password"))
                 .build();
         return new InMemoryUserDetailsManager(user);
     }
@@ -30,7 +30,11 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests -> {
-                    requests.requestMatchers("/user/**", "/swagger-ui.html", "/images/**").permitAll();
+                    requests.requestMatchers("/user/**",
+                            "/images/**",
+                            "/v3/api-docs**",
+                            "/swagger**"
+                    ).permitAll();
                     requests.anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -42,17 +46,4 @@ public class WebSecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
-
-//    @Bean
-//    CorsConfigurationSource source() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.addAllowedOrigin("http://127.0.0.1");
-//        configuration.addAllowedMethod(HttpMethod.GET);
-//        configuration.addAllowedMethod(HttpMethod.POST);
-//        configuration.addAllowedMethod(HttpMethod.PUT);
-//        configuration.addAllowedMethod(HttpMethod.DELETE);
-//        UrlBasedCorsConfigurationSource basedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
-//        basedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
-//        return basedCorsConfigurationSource;
-//    }
 }
