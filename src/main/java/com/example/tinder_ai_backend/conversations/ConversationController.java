@@ -3,7 +3,7 @@ package com.example.tinder_ai_backend.conversations;
 import com.example.tinder_ai_backend.matches.Match;
 import com.example.tinder_ai_backend.matches.MatchRepo;
 import com.example.tinder_ai_backend.responses.Response;
-import com.example.tinder_ai_backend.services.ResponseService;
+import com.example.tinder_ai_backend.services.interfaces.ResponseServiceInterface;
 import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +23,7 @@ public class ConversationController {
 
     private static final Logger logger = LogManager.getLogger(ConversationController.class);
     private final ConversationRepo conversationRepo;
-    private final ResponseService responseService;
+    private final ResponseServiceInterface responseService;
     private final MatchRepo matchRepo;
 
     @GetMapping(path = "/conversation/find-all", produces = MediaType.APPLICATION_JSON_VALUE)
