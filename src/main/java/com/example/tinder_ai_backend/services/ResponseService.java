@@ -36,7 +36,8 @@ public class ResponseService implements ResponseServiceInterface {
     public CompletableFuture<String> generateChatResponse(Response res) {
         logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
 
-        final String EXTRA_CONFIG = "Your name is " + res.name() + " and you are " + res.age() + " years old and you like the following: " + res.bio();
+        final String EXTRA_CONFIG = "You are a " + res.age() + " years old single " + res.gender() + " of " + res.ethnicity() + " on a dating app, and your name is " + res.name() + "." +
+                "You're bio is:  " + res.bio();
 
         return CompletableFuture.supplyAsync(() -> {
             try {
