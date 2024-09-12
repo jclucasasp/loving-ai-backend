@@ -7,10 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -28,7 +25,6 @@ public class ResponseService implements ResponseServiceInterface {
     private final ThreadPoolTaskExecutor chatResponseExecutor;
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
-    private final VectorStore vectorStore;
 
     @Async("chatResponseExecutor")
     @Override
@@ -46,7 +42,6 @@ public class ResponseService implements ResponseServiceInterface {
                         .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
                         .user(res.messagePrompt())
                         .advisors(new PromptChatMemoryAdvisor(chatMemory))
-                        .advisors(new QuestionAnswerAdvisor(vectorStore, SearchRequest.defaults()))
                         .call()
                         .content();
             } catch (Exception e) {
