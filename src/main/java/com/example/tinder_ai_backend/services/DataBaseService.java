@@ -89,7 +89,6 @@ public class DataBaseService implements DataBaseServiceInterface {
                             profile.firstName().toLowerCase().concat(profile.lastName().toLowerCase()).concat("@gmail.com"),
                             passwordEncoder.encode("password"),
                             new Date(),
-                            false,
                             null,
                             null
                     ))

@@ -29,7 +29,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests -> {
-                    requests.requestMatchers("/user/**",
+                    requests.requestMatchers(
                             "/images/**",
                             "/v3/api-docs**",
                             "/swagger**"

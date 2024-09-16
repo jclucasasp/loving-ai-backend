@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -53,7 +52,8 @@ public class UserController {
     }
 
     @PostMapping(path = "/user/create")
-    ResponseEntity<Optional<User>> createNewUser(@RequestBody NewUser newUser) {
+    ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
+
         if (userRepo.existsAllByEmail(newUser.email())) {
             logger.debug("Email : {} already exist...", newUser.email());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
@@ -69,7 +69,7 @@ public class UserController {
 
         profileRepo.save(newProfile);
 
-        return ResponseEntity.ok(userRepo.findById(user.id()));
+        return ResponseEntity.ok(HttpStatus.CREATED);
     }
 
     @DeleteMapping(path = "/user/delete")
@@ -86,20 +86,17 @@ public class UserController {
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
 
-        if (userFound.active()) {
-            logger.debug("User already logged in, returning profile...");
-            return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONTINUE))
-            );
-        }
-
         if (!encoder.matches(req.password(), userFound.password())) {
             logger.debug("Unauthorised");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
 
-        UserSession session = new UserSession(userFound.id(), new Date(), null);
-        sessionRepo.save(session);
+        boolean currentSession = sessionRepo.existsByUserId(req.id());
+
+        if (!currentSession) {
+            UserSession session = new UserSession(userFound.id(), new Date(), null);
+            sessionRepo.save(session);
+        }
 
         userRepo.findFirstByIdAndUpdate(userFound.id(), true);
 
@@ -112,11 +109,7 @@ public class UserController {
     }
 
     @PostMapping(path = "/user/logout")
-    public ResponseEntity<String> userLogout(@RequestBody User req) {
-        if (req == null) {
-            logger.debug("User body empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User body empty");
-        }
+    public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
 
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
@@ -128,6 +121,6 @@ public class UserController {
 
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
 
-        return ResponseEntity.ok("User logged out successfully");
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 }

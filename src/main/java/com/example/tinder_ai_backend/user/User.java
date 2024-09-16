@@ -15,7 +15,6 @@ public record User(
         String email,
         String password,
         Date create_date,
-        Boolean active,
         @Nullable
         Date end_date,
         @Nullable
@@ -23,19 +22,20 @@ public record User(
 ) {
     public User(
             String id,
-            String email, String password, Date create_date, Boolean active, @Nullable
-            Date end_date, @Nullable
+            String email, String password, Date create_date,
+            @Nullable
+            Date end_date,
+            @Nullable
             Date passwordResetDate) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.create_date = create_date;
-        this.active = active;
         this.end_date = end_date;
         this.passwordResetDate = passwordResetDate;
     }
 
     public User(String email, String password) {
-        this(UUID.randomUUID().toString(), email, password, new Date(), false, null, null);
+        this(UUID.randomUUID().toString(), email, password, new Date(), null, null);
     }
 }
