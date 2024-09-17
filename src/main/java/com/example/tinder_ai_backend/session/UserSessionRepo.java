@@ -14,6 +14,6 @@ public interface UserSessionRepo extends MongoRepository<UserSession, String> {
     @Update("{'$set':{'logOutDate':?1}}")
     void findFirstByIdAndUpdate(String sessionId, Date logOutDate);
 
-    @ExistsQuery("{'userId'}")
-    boolean existsByUserId(String userId);
+
+    boolean existsByUserIdAndLogOutDateIsNull(String userId);
 }

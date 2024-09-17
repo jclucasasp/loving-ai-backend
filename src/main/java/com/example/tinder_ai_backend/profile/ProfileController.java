@@ -29,7 +29,7 @@ public class ProfileController {
         }));
     }
 
-    @GetMapping(value = "/profile/id")
+    @PostMapping(value = "/profile/id")
     public ResponseEntity<Profile> getProfileById(@RequestBody Profile profile) {
         return ResponseEntity.ok(profileRepo.findById(profile.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));

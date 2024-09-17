@@ -91,7 +91,7 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
 
-        boolean currentSession = sessionRepo.existsByUserId(req.id());
+        boolean currentSession = sessionRepo.existsByUserIdAndLogOutDateIsNull(userFound.id());
 
         if (!currentSession) {
             UserSession session = new UserSession(userFound.id(), new Date(), null);
@@ -114,10 +114,7 @@ public class UserController {
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
-        UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow(() -> {
-            logger.debug("No session found");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND);
-        });
+        UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
 
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
 

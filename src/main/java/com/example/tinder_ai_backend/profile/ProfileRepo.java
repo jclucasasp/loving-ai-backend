@@ -10,6 +10,9 @@ import java.util.Optional;
 
 public interface ProfileRepo extends MongoRepository<Profile, String> {
 
+    @ExistsQuery("{'userId':?0}")
+    boolean existsProfileByUserId(String userId);
+
     @Query("{'firstName': ?0}")
     Optional<Profile> getProfileByFirstName(String firstName);
 
@@ -18,7 +21,4 @@ public interface ProfileRepo extends MongoRepository<Profile, String> {
 
     @Aggregation(pipeline = {"{$sample:{size:1}}"})
     Profile getRandomProfile();
-
-    @ExistsQuery("{'userId':?0}")
-    boolean existsProfileByUserId(String userId);
 }
