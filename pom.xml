@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>tinder-ai-backend</artifactId>
+	<artifactId>ai-dating-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>tinder-ai-backend</name>
-	<description>Tinder backend with AI</description>
+	<name>ai-dating-backend</name>
+	<description>AI Dating app backend</description>
 	<url/>
 	<licenses>
 		<license/>
