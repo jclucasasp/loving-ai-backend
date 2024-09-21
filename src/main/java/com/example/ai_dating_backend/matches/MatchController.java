@@ -5,8 +5,7 @@ import com.example.ai_dating_backend.conversations.ConversationRepo;
 import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
 import lombok.AllArgsConstructor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,12 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
+@Log4j2
 @CrossOrigin(origins = "*")
 @RestController
 @AllArgsConstructor
 public class MatchController {
-
-    private static final Logger logger = LogManager.getLogger(MatchController.class);
+    
     private final MatchRepo matchRepo;
     private final ConversationRepo conversationRepo;
     private final ProfileRepo profileRepo;
@@ -28,12 +27,12 @@ public class MatchController {
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
 
         if (!profileRepo.existsProfileByUserId(req.profileId())) {
-            logger.error("No user found for id: [ {} ]",req.profileId());
+            log.error("No user found for id: [ {} ]",req.profileId());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
         if (matchRepo.existByProfileId(req.toProfileId())) {
-            logger.debug("Match already exist for profile id: [ {} ]", req.profileId());
+            log.debug("Match already exist for profile id: [ {} ]", req.profileId());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
 
@@ -57,7 +56,7 @@ public class MatchController {
     public ResponseEntity<List<Match>> findAll(@RequestBody Profile req) {
         List<Match> matchList = matchRepo.findAllProfileId(req.userId())
         .orElseThrow(() -> {
-           logger.error("Unable to find matches for profile id: [ {} ]",req.userId());
+           log.error("Unable to find matches for profile id: [ {} ]",req.userId());
            return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
@@ -73,7 +72,7 @@ public class MatchController {
                 profilesById.add(profileRepo.getProfileByUserId(match.toProfileId()));
             }
         } catch (Exception e) {
-            logger.error("Unable to populate profiles...");
+            log.error("Unable to populate profiles...");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to populate profiles", e);
         }
 
@@ -84,13 +83,13 @@ public class MatchController {
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
         Match matchFound = matchRepo.findByProfileId(profile.userId())
                 .orElseThrow(() -> {
-                    logger.error("Unable to find match for profile id: [ {} ]", profile.userId());
+                    log.error("Unable to find match for profile id: [ {} ]", profile.userId());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         try {
             matchRepo.deleteById(matchFound.id());
         } catch (Exception e) {
-            logger.error("Unable to delete profile id: [ {} ]", profile.userId());
+            log.error("Unable to delete profile id: [ {} ]", profile.userId());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: " + profile.userId(), e);
         }
         return ResponseEntity.ok("Match id: " + profile.userId() + " deleted");
@@ -99,7 +98,7 @@ public class MatchController {
     @DeleteMapping(path = "/matches/delete-all")
     public ResponseEntity<String> delAllMessages() {
         matchRepo.deleteAll();
-        logger.debug("All matches deleted...");
+        log.debug("All matches deleted...");
         return ResponseEntity.ok("All matches deleted");
     }
 }

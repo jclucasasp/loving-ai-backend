@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.MongoId;
 import java.util.Date;
 import java.util.UUID;
 
+//TODO: Change email to username for new security implementation
 public record User (
         @MongoId(FieldType.STRING)
         String id,

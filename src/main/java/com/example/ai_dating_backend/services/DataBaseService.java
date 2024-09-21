@@ -11,8 +11,7 @@ import com.example.ai_dating_backend.user.User;
 import com.example.ai_dating_backend.user.UserRepo;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,10 +19,10 @@ import org.springframework.stereotype.Service;
 import java.io.FileReader;
 import java.util.*;
 
+@Log4j2
 @Service
 public class DataBaseService implements DataBaseServiceInterface {
 
-    private static final Logger logger = LogManager.getLogger(DataBaseService.class);
     private final static String PROFILES_JSON_FILE = "profiles.json";
     private final UserSessionRepo sessionRepo;
     private final UserRepo userRepo;
@@ -52,43 +51,43 @@ public class DataBaseService implements DataBaseServiceInterface {
 
     @Override
     public void purgeData() {
-        logger.info("Going to purge data from database...");
-        logger.info("Attempting to purge all Sessions...");
+        log.info("Going to purge data from database...");
+        log.info("Attempting to purge all Sessions...");
         sessionRepo.deleteAll();
-        logger.info("All sessions deleted");
+        log.info("All sessions deleted");
 
-        logger.info("Attempting to purge all Users...");
+        log.info("Attempting to purge all Users...");
         userRepo.deleteAll();
-        logger.info("All Users deleted");
+        log.info("All Users deleted");
 
-        logger.info("Attempting to purge all Profiles");
+        log.info("Attempting to purge all Profiles");
         profileRepo.deleteAll();
-        logger.info("All profiles deleted");
+        log.info("All profiles deleted");
 
-        logger.info("Attempting to purge all Matches...");
+        log.info("Attempting to purge all Matches...");
         matchRepo.deleteAll();
-        logger.info("All Matches deleted");
+        log.info("All Matches deleted");
 
-        logger.info("Attempting to purge all Conversations");
+        log.info("Attempting to purge all Conversations");
         conversationRepo.deleteAll();
-        logger.info("All conversations deleted");
+        log.info("All conversations deleted");
 
-        logger.info("Database no purged and ready to be seeded...");
+        log.info("Database no purged and ready to be seeded...");
     }
 
     @Override
     public void seedDataBase() {
-        logger.info("Attempting to seed database...");
-        logger.info("Attempting to read json files and create a list of profiles...");
+        log.info("Attempting to seed database...");
+        log.info("Attempting to read json files and create a list of profiles...");
 
         try {
             List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
             }.getType());
-            logger.info("Profile list created from file, attempting to save Profiles to database...");
+            log.info("Profile list created from file, attempting to save Profiles to database...");
             profileRepo.saveAll(profileList);
-            logger.info("Profiles saved...");
+            log.info("Profiles saved...");
 
-            logger.info("Attempting to create Users from Profiles...");
+            log.info("Attempting to create Users from Profiles...");
             List<User> userList = new ArrayList<>();
             profileList.forEach(profile -> userList.add(
                     new User(
@@ -100,14 +99,14 @@ public class DataBaseService implements DataBaseServiceInterface {
                             null
                     ))
             );
-            logger.info("Users created from, attempting to save to database...");
+            log.info("Users created from, attempting to save to database...");
             userRepo.saveAll(userList);
-            logger.info("Users saved to database...");
+            log.info("Users saved to database...");
         } catch (Exception e) {
-            logger.error("Unable to read json file error: \n", e);
+            log.error("Unable to read json file error: \n", e);
         }
 
-        logger.info("Database seeded successfully...");
+        log.info("Database seeded successfully...");
     }
 
     @Override

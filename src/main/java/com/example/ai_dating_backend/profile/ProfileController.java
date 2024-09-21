@@ -1,7 +1,6 @@
 package com.example.ai_dating_backend.profile;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,11 +9,11 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 
+@Log4j2
 @CrossOrigin(origins = "*")
 @RestController
 public class ProfileController {
 
-    private static final Logger logger = LogManager.getLogger(ProfileController.class);
     private final ProfileRepo profileRepo;
 
     private ProfileController(ProfileRepo profileRepo) {
@@ -24,7 +23,7 @@ public class ProfileController {
     @GetMapping("/profile/all")
     public ResponseEntity<List<Profile>> getAllProfiles() {
         return ResponseEntity.ok(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
-            logger.error("No profiles found...");
+            log.error("No profiles found...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No profiles found");
         }));
     }
@@ -39,7 +38,7 @@ public class ProfileController {
     public ResponseEntity<String> deleteProfileById(@RequestBody Profile profile) {
 
         if (!profileRepo.existsById(profile.userId())) {
-            logger.debug("No user exist for user id: [ {} ]", profile.userId());
+            log.debug("No user exist for user id: [ {} ]", profile.userId());
         }
         profileRepo.deleteById(profile.userId());
         return ResponseEntity.ok("User deleted");
@@ -48,12 +47,12 @@ public class ProfileController {
     @PostMapping("/profile/name")
     public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
         if (req == null || req.firstName().isBlank()) {
-            logger.debug("Firstname is missing from the body...");
+            log.debug("Firstname is missing from the body...");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No params specified");
         }
         return ResponseEntity.ok(profileRepo.getProfileByFirstName(req.firstName())
                 .orElseThrow(() -> {
-                    logger.debug("Nothing found under firstname : [ {} ]", req.firstName());
+                    log.debug("Nothing found under firstname : [ {} ]", req.firstName());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -62,7 +61,7 @@ public class ProfileController {
     @GetMapping("/profile/random")
     public ResponseEntity<Profile> getRandomProfile() {
         return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile()).orElseThrow(() -> {
-            logger.debug("No profiles to return...");
+            log.debug("No profiles to return...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
     }

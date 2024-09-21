@@ -3,8 +3,7 @@ package com.example.ai_dating_backend.services;
 import com.example.ai_dating_backend.responses.Response;
 import com.example.ai_dating_backend.services.interfaces.ResponseServiceInterface;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -15,12 +14,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 @EnableAsync(proxyTargetClass = true)
 public class ResponseService implements ResponseServiceInterface {
-
-    private static final Logger logger = LogManager.getLogger(ResponseService.class);
 
     private final ThreadPoolTaskExecutor chatResponseExecutor;
     private final ChatClient chatClient;
@@ -30,7 +28,7 @@ public class ResponseService implements ResponseServiceInterface {
     @Override
     // to implement streaming, just change to CompletableFuture<Flux><String>>
     public CompletableFuture<String> generateChatResponse(Response res) {
-        logger.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
+        log.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
 
         final String EXTRA_CONFIG = "You are a " + res.age() + " years old single " + res.gender() + " of " + res.ethnicity() + " on a dating app, and your name is " + res.name() + "." +
                 "You're bio is:  " + res.bio();
@@ -45,7 +43,7 @@ public class ResponseService implements ResponseServiceInterface {
                         .call()
                         .content();
             } catch (Exception e) {
-                logger.error("Error generating chat response: ", e);
+                log.error("Error generating chat response: ", e);
                 throw new RuntimeException("Failed to generate chat response", e);
             }
         }, chatResponseExecutor);

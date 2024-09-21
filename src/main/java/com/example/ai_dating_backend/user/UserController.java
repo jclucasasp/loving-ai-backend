@@ -4,8 +4,7 @@ import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
 import com.example.ai_dating_backend.session.UserSession;
 import com.example.ai_dating_backend.session.UserSessionRepo;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,10 +16,9 @@ import java.util.Date;
 import java.util.List;
 
 @CrossOrigin(origins = "*")
+@Log4j2
 @RestController
 public class UserController {
-
-    private static final Logger logger = LogManager.getLogger(UserController.class);
 
     private final UserRepo userRepo;
     private final ProfileRepo profileRepo;
@@ -38,7 +36,7 @@ public class UserController {
     @GetMapping(path = "/user/{email}", params = "email")
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
-            logger.debug("No user found for email: [ {} ]", email);
+            log.debug("No user found for email: [ {} ]", email);
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
         }));
     }
@@ -46,7 +44,7 @@ public class UserController {
     @GetMapping(path = "/user/all")
     ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> {
-            logger.debug("No users found...");
+            log.debug("No users found...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
     }
@@ -54,8 +52,12 @@ public class UserController {
     @PostMapping(path = "/user/create")
     ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
 
+        if (newUser.email().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         if (userRepo.existsAllByEmail(newUser.email())) {
-            logger.debug("Email : {} already exist...", newUser.email());
+            log.debug("Email : {} already exist...", newUser.email());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
@@ -80,14 +82,19 @@ public class UserController {
 
     @PostMapping("/user/login")
     public ResponseEntity<Profile> userLogin(@RequestBody User req) {
+
+        if (req.email() == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         User userFound = userRepo.getUserByEmail(req.email())
                 .orElseThrow(() -> {
-                    logger.debug("No user found");
+                    log.debug("No user found");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
 
         if (!encoder.matches(req.password(), userFound.password())) {
-            logger.debug("Unauthorised");
+            log.debug("Unauthorised");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
 
@@ -102,7 +109,7 @@ public class UserController {
 
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> {
-                    logger.debug("Unable to find profile for user");
+                    log.debug("Unable to find profile for user");
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -111,6 +118,10 @@ public class UserController {
     @PostMapping(path = "/user/logout")
     public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
 
+        if (req.id() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
@@ -118,6 +129,6 @@ public class UserController {
 
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
 
-        return ResponseEntity.ok(HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
