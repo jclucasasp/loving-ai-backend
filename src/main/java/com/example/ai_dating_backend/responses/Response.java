@@ -5,5 +5,6 @@ public record Response (String messagePrompt,
                         Integer age,
                         String ethnicity,
                         String gender,
-                        String bio)
+                        String bio,
+                        String personality)
 {}

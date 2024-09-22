@@ -12,7 +12,11 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+//TODO: Look at the Messages class from ChatMemory. You can change this to use the db to look up messages.
+// Or use a Vector db to store the messages in as it looses its mind after generating too many responses.
 
 @Log4j2
 @Service
@@ -21,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public class ResponseService implements ResponseServiceInterface {
 
     private final ThreadPoolTaskExecutor chatResponseExecutor;
+    private final PromptGenerator promptGenerator;
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
 
@@ -30,15 +35,18 @@ public class ResponseService implements ResponseServiceInterface {
     public CompletableFuture<String> generateChatResponse(Response res) {
         log.info("\nGenerating chat response on thread {}", Thread.currentThread().getName());
 
-        final String EXTRA_CONFIG = "You are a " + res.age() + " years old single " + res.gender() + " of " + res.ethnicity() + " on a dating app, and your name is " + res.name() + "." +
-                "You're bio is:  " + res.bio();
-
         return CompletableFuture.supplyAsync(() -> {
+            Map<String, String> prompt = promptGenerator.generatedChatPrompt(res);
+
             try {
+
+                log.info("Generating prompt with prompt: {} ", prompt);
+
                 return chatClient
                         .prompt()
-                        .system(sp -> sp.param("extraConfig", EXTRA_CONFIG))
-                        .user(res.messagePrompt())
+                        .system(prompt.get("system"))
+//                        .system(sp -> sp.param("extraConfig", prompt.get("system")))
+                        .user(prompt.get("user"))
                         .advisors(new PromptChatMemoryAdvisor(chatMemory))
                         .call()
                         .content();
