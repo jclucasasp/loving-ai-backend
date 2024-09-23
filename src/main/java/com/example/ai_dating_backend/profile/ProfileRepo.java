@@ -1,9 +1,6 @@
 package com.example.ai_dating_backend.profile;
 
-import org.springframework.data.mongodb.repository.Aggregation;
-import org.springframework.data.mongodb.repository.ExistsQuery;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.*;
 
 import java.util.Optional;
 

@@ -66,8 +66,18 @@ public class ProfileController {
         }));
     }
 
-    @GetMapping("/profile/index/stats")
-    public void getProfileStats() {
+    @PostMapping("/profile/update")
+    public ResponseEntity<Profile> updateProfile(@RequestBody Profile req) {
 
+        System.out.println(req);
+
+        if (req == null || req.firstName().isBlank()) {
+            log.debug("Empty body...");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        Profile updatedProfile = profileRepo.save(req);
+
+        return ResponseEntity.ok(updatedProfile);
     }
 }

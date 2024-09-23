@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @RequiredArgsConstructor
-public class TinderAiBackendApplication implements CommandLineRunner {
+public class
+TinderAiBackendApplication implements CommandLineRunner {
 
 
    //TODO: Change the personalityTypeId() to point to the personalityTypeId in the profiles.json file and fix it in the databaseHelper file
