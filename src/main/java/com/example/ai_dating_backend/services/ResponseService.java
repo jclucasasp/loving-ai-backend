@@ -5,7 +5,7 @@ import com.example.ai_dating_backend.services.interfaces.ResponseServiceInterfac
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -45,9 +45,8 @@ public class ResponseService implements ResponseServiceInterface {
                 return chatClient
                         .prompt()
                         .system(prompt.get("system"))
-//                        .system(sp -> sp.param("extraConfig", prompt.get("system")))
                         .user(prompt.get("user"))
-                        .advisors(new PromptChatMemoryAdvisor(chatMemory))
+                        .advisors(new MessageChatMemoryAdvisor(chatMemory))
                         .call()
                         .content();
             } catch (Exception e) {
