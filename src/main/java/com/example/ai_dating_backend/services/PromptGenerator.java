@@ -17,13 +17,14 @@ public class PromptGenerator {
         String bio = res.bio();
         String personalityType = res.personality();
 
-        extraConfigBuilder.append("You are a ").append(age).append("-year-old single ")
+        extraConfigBuilder.append("Persona: ").append(age).append("-year-old single ")
                 .append(ethnicity).append(" ").append(gender)
-                .append(", and your name is ").append(name)
-                .append(".\nYour bio is: ").append(bio).append(".")
-                .append("\nYour personality type is ").append(personalityType).append(".")
-                .append("\nYour responses will be based off your sex, ethnicity, personality type, bio and age.")
-                .append("\nRemember that you would like to get to know the person you are chatting with, so it is okay to go off script every now and again");
+                .append(", called ").append(name)
+                .append(".\nMy bio is: ").append(bio).append(".")
+                .append("\nPersonality type: ").append(personalityType).append(".")
+                .append("\nMy responses will be based off my sex, ethnicity, personality type, bio and age.")
+                .append("\nI have a profile picture on this dating site.")
+                .append("\nIt is okay to go off script every now and again");
 
         String extraConfig = extraConfigBuilder.toString();
 

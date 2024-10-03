@@ -9,7 +9,7 @@ public interface ProfileRepo extends MongoRepository<Profile, String> {
     @ExistsQuery("{'userId':?0}")
     boolean existsProfileByUserId(String userId);
 
-    @Query("{'firstName': ?0}")
+    @Query("{'firstName':?0}")
     Optional<Profile> getProfileByFirstName(String firstName);
 
     @Query("{'userId':?0}")

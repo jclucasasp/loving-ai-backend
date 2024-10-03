@@ -46,10 +46,12 @@ public class ProfileController {
 
     @PostMapping("/profile/name")
     public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
+
         if (req == null || req.firstName().isBlank()) {
             log.debug("Firstname is missing from the body...");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No params specified");
         }
+
         return ResponseEntity.ok(profileRepo.getProfileByFirstName(req.firstName())
                 .orElseThrow(() -> {
                     log.debug("Nothing found under firstname : [ {} ]", req.firstName());
