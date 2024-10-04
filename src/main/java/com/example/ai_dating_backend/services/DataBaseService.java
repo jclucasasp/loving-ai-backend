@@ -92,7 +92,7 @@ public class DataBaseService implements DataBaseServiceInterface {
             profileList.forEach(profile -> userList.add(
                     new User(
                             profile.userId(),
-                            profile.firstName().toLowerCase().concat(profile.lastName().toLowerCase()).concat("@gmail.com"),
+                            profile.firstName().toLowerCase().concat(profile.lastName().toLowerCase()).concat("@nomail.com"),
                             passwordEncoder.encode("password"),
                             new Date(),
                             null,

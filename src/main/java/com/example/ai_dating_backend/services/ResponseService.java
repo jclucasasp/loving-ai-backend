@@ -17,10 +17,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-//TODO: Every chat needs a new Chat memory, else the ai uses it to save all the conversations. Prop have to use a vector
-// or redis to save with userId. Already changed the front and backend Response to include it
-// Or use a Vector db to store the messages in.
-
 @Log4j2
 @Service
 @RequiredArgsConstructor
