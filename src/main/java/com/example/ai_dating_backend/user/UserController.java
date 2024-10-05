@@ -55,6 +55,8 @@ public class UserController {
         }));
     }
 
+    //TODO: Set the date offset.
+    // https://reflectoring.io/spring-timezones/
     @PostMapping(path = "/user/create")
     ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
 

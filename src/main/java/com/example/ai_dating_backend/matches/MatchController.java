@@ -31,7 +31,7 @@ public class MatchController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
-        if (matchRepo.existByProfileId(req.toProfileId())) {
+        if (matchRepo.existByProfileId(req.profileId(), req.toProfileId())) {
             log.debug("Match already exist for profile id: [ {} ]", req.profileId());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Match already made");
         }
