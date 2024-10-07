@@ -1,18 +1,17 @@
 package com.example.ai_dating_backend;
 
+import com.example.ai_dating_backend.services.DataBaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-
-//TODO: Use express server to rather serve the images
-//npm install express serve-static
 @SpringBootApplication
 @RequiredArgsConstructor
 public class
 TinderAiBackendApplication implements CommandLineRunner {
 
+    final DataBaseService dataBaseHelper;
 
    //TODO: Change the personalityTypeId() to point to the personalityTypeId in the profiles.json file and fix it in the databaseHelper file
     public static void main(String[] args) {
@@ -20,6 +19,7 @@ TinderAiBackendApplication implements CommandLineRunner {
     }
 
     public void run(String... args) {
+//        dataBaseHelper.updateAndSaveProfiles();
 //        dataBaseHelper.purgeData();
 //        dataBaseHelper.seedDataBase();
 //        dataBaseHelper.seedPersonalities();

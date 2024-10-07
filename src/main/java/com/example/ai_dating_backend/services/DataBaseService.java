@@ -10,15 +10,21 @@ import com.example.ai_dating_backend.session.UserSessionRepo;
 import com.example.ai_dating_backend.user.User;
 import com.example.ai_dating_backend.user.UserRepo;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
+// TODO: Replace the personality types in the json file to use the id of the personality types as well as in the ResponseService class
 @Log4j2
 @Service
 public class DataBaseService implements DataBaseServiceInterface {
@@ -76,14 +82,66 @@ public class DataBaseService implements DataBaseServiceInterface {
     }
 
     @Override
+    public void updateAndSaveProfiles() {
+        try {
+            log.info("Attempting to read json files and create a list of profiles...");
+            List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
+            }.getType());
+            log.info("Profile list created from file, attempting to update Profiles...");
+
+            List<Profile> updatedList = profileList.stream().map(p -> {
+                if (!p.ai()) {
+                    log.info("No AI field, adding to new list");
+                    return new Profile(UUID.randomUUID().toString(),
+                            p.firstName(),
+                            p.lastName(),
+                            p.age(),
+                            p.ethnicity(),
+                            p.gender(),
+                            p.bio(),
+                            p.imageUrl(),
+                            true,
+                            p.myersBriggsPersonalityType());
+                } else {
+                    log.info("AI Field found, returning profile...");
+                    return p;
+                }
+            }).toList();
+
+            writeUpdatedJsonList(updatedList);
+
+        } catch (IOException io) {
+            log.error("Unable to process file: ", io);
+        }
+    }
+
+    private void writeUpdatedJsonList(List<Profile> updatedProfiles) {
+        log.info("Attempting to convert updated profiles to a json file...");
+        Gson gsonWriter = new GsonBuilder().setPrettyPrinting().create();
+        Type type = new TypeToken<List<Profile>>() {
+        }.getType();
+
+        File file = new File(PROFILES_JSON_FILE + ".updated.json");
+
+        try (FileWriter writer = new FileWriter(file);) {
+            log.info("Attempting to write updated profiles back to a json file...");
+            gsonWriter.toJson(updatedProfiles, type, writer);
+            log.info("New json file called profiles.updated.json");
+        } catch (IOException e) {
+            log.error("Unable to process the updated profile: ", e);
+        }
+    }
+
+    @Override
     public void seedDataBase() {
         log.info("Attempting to seed database...");
-        log.info("Attempting to read json files and create a list of profiles...");
+        log.info("Attempting to read updated json files and create a list of profiles...");
 
         try {
             List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
             }.getType());
             log.info("Profile list created from file, attempting to save Profiles to database...");
+
             profileRepo.saveAll(profileList);
             log.info("Profiles saved...");
 
@@ -111,7 +169,13 @@ public class DataBaseService implements DataBaseServiceInterface {
 
     @Override
     public void seedPersonalities() {
+        log.info("Going to purge personalities types from db...");
+        typesRepo.deleteAll();
+        descriptionRepo.deleteAll();
+
+        log.info("Attempting to seed personalities...");
         Arrays.stream(TypesEnum.values()).forEach(p -> {
+
             PersonalitiesTypes type = typesRepo.insert(new PersonalitiesTypes(UUID.randomUUID().toString(), p));
 
             switch (p) {

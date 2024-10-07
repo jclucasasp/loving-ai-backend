@@ -16,6 +16,7 @@ public record Profile(
         Gender gender,
         String bio,
         String imageUrl,
+        boolean ai,
         String myersBriggsPersonalityType
 ) {
 }

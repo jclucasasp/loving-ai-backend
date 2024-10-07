@@ -75,7 +75,7 @@ public class UserController {
         userRepo.save(user);
 
         Profile newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                newUser.ethnicity(), newUser.gender(), newUser.bio(), newUser.imageUrl(), newUser.personalityTypeId());
+                newUser.ethnicity(), newUser.gender(), newUser.bio(), newUser.imageUrl(),false, newUser.personalityTypeId());
 
         profileRepo.save(newProfile);
 
