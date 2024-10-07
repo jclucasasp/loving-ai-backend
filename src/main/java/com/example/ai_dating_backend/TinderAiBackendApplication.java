@@ -5,6 +5,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+
+//TODO: Use express server to rather serve the images
+//npm install express serve-static
 @SpringBootApplication
 @RequiredArgsConstructor
 public class
