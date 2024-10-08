@@ -16,8 +16,8 @@ public interface ProfileRepo extends MongoRepository<Profile, String> {
     Optional<Profile> getProfileByUserId(String userId);
 
     @Aggregation(pipeline = {
-        "{$match:{'ai':true}}",
-        "{$sample:{size:1}}"
+            "{$match:{'ai':true,'gender':?0}}}",
+            "{$sample:{size:1}}"
     })
-    Profile getRandomProfile();
+    Profile getRandomProfile(Gender gender);
 }

@@ -60,9 +60,9 @@ public class ProfileController {
         );
     }
 
-    @GetMapping("/profile/random")
-    public ResponseEntity<Profile> getRandomProfile() {
-        return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile()).orElseThrow(() -> {
+    @PostMapping(path = "/profile/random")
+    public ResponseEntity<Profile> getRandomProfile(@RequestBody Profile req) {
+        return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile(req.gender())).orElseThrow(() -> {
             log.debug("No profiles to return...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
