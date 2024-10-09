@@ -54,9 +54,9 @@ public class MatchController {
 
     @PostMapping(path = "/matches/all")
     public ResponseEntity<List<Match>> findAll(@RequestBody Profile req) {
-        List<Match> matchList = matchRepo.findAllProfileId(req.userId())
+        List<Match> matchList = matchRepo.findAllProfileId(req.getUserId())
         .orElseThrow(() -> {
-           log.error("Unable to find matches for profile id: [ {} ]",req.userId());
+           log.error("Unable to find matches for profile id: [ {} ]",req.getUserId());
            return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
@@ -81,18 +81,18 @@ public class MatchController {
 
     @DeleteMapping(path = "/match/delete-by-id")
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
-        Match matchFound = matchRepo.findByProfileId(profile.userId())
+        Match matchFound = matchRepo.findByProfileId(profile.getUserId())
                 .orElseThrow(() -> {
-                    log.error("Unable to find match for profile id: [ {} ]", profile.userId());
+                    log.error("Unable to find match for profile id: [ {} ]", profile.getUserId());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         try {
             matchRepo.deleteById(matchFound.id());
         } catch (Exception e) {
-            log.error("Unable to delete profile id: [ {} ]", profile.userId());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: " + profile.userId(), e);
+            log.error("Unable to delete profile id: [ {} ]", profile.getUserId());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: " + profile.getUserId(), e);
         }
-        return ResponseEntity.ok("Match id: " + profile.userId() + " deleted");
+        return ResponseEntity.ok("Match id: " + profile.getUserId() + " deleted");
     }
 
     @DeleteMapping(path = "/matches/delete-all")

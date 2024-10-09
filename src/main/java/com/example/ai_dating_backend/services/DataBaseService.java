@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,10 @@ import java.util.*;
 @Service
 public class DataBaseService implements DataBaseServiceInterface {
 
-    //TODO: Replace with the updated profiles json file name once done
-    private final static String PROFILES_JSON_FILE = "profiles.json";
+    // Make sure the correct file in the .properties before running...
+    @Value("${spring.json.profile.file.name}")
+    private String PROFILES_JSON_FILE;
+
     private final UserSessionRepo sessionRepo;
     private final UserRepo userRepo;
     private final ProfileRepo profileRepo;
@@ -84,32 +87,55 @@ public class DataBaseService implements DataBaseServiceInterface {
 
     @Override
     public void updateAndSaveProfiles() {
+        log.info("Json file to process: [{}]", PROFILES_JSON_FILE);
         try {
             log.info("Attempting to read json files and create a list of profiles...");
             List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
             }.getType());
             log.info("Profile list created from file, attempting to update Profiles...");
 
-            List<Profile> updatedList = profileList.stream().map(p -> {
-                if (!p.ai()) {
-                    log.info("No AI field, adding to new list");
-                    return new Profile(UUID.randomUUID().toString(),
-                            p.firstName(),
-                            p.lastName(),
-                            p.age(),
-                            p.ethnicity(),
-                            p.gender(),
-                            p.bio(),
-                            p.imageUrl(),
-                            true,
-                            p.myersBriggsPersonalityType());
-                } else {
-                    log.info("AI Field found, returning profile...");
-                    return p;
-                }
-            }).toList();
+            if (PROFILES_JSON_FILE.contains("females")) {
+                log.info("Creating females list...");
+                List<Profile> updatedList = profileList.stream().map(p -> {
+                    if (!p.isAi()) {
+                        return new Profile(UUID.randomUUID().toString(),
+                                p.getFirstName(),
+                                p.getLastName(),
+                                p.getAge(),
+                                p.getEthnicity(),
+                                p.getGender(),
+                                p.getBio(),
+                                "women/".concat(p.getImageUrl()),
+                                true,
+                                p.getMyersBriggsPersonalityType());
+                    } else {
+                        return p;
+                    }
+                }).toList();
 
-            writeUpdatedJsonList(updatedList);
+                writeUpdatedJsonList(updatedList);
+
+            } else {
+                log.info("Creating males list...");
+                List<Profile> updatedList = profileList.stream().map(p -> {
+                    if (!p.isAi()) {
+                        return new Profile(UUID.randomUUID().toString(),
+                                p.getFirstName(),
+                                p.getLastName(),
+                                p.getAge(),
+                                p.getEthnicity(),
+                                p.getGender(),
+                                p.getBio(),
+                                "men/".concat(p.getImageUrl()),
+                                true,
+                                p.getMyersBriggsPersonalityType());
+                    } else {
+                        return p;
+                    }
+                }).toList();
+
+                writeUpdatedJsonList(updatedList);
+            }
 
         } catch (IOException io) {
             log.error("Unable to process file: ", io);
@@ -127,7 +153,7 @@ public class DataBaseService implements DataBaseServiceInterface {
         try (FileWriter writer = new FileWriter(file);) {
             log.info("Attempting to write updated profiles back to a json file...");
             gsonWriter.toJson(updatedProfiles, type, writer);
-            log.info("New json file called profiles.updated.json");
+            log.info("New json file called: [{}]", file.getName());
         } catch (IOException e) {
             log.error("Unable to process the updated profile: ", e);
         }
@@ -150,8 +176,8 @@ public class DataBaseService implements DataBaseServiceInterface {
             List<User> userList = new ArrayList<>();
             profileList.forEach(profile -> userList.add(
                     new User(
-                            profile.userId(),
-                            profile.firstName().toLowerCase().concat(profile.lastName().toLowerCase()).concat("@nomail.com"),
+                            profile.getUserId(),
+                            profile.getFirstName().toLowerCase().concat(profile.getLastName().toLowerCase()).concat("@nomail.com"),
                             passwordEncoder.encode("password"),
                             new Date(),
                             null,

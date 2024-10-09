@@ -30,31 +30,31 @@ public class ProfileController {
 
     @PostMapping(value = "/profile/id")
     public ResponseEntity<Profile> getProfileById(@RequestBody Profile profile) {
-        return ResponseEntity.ok(profileRepo.findById(profile.userId())
+        return ResponseEntity.ok(profileRepo.findById(profile.userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
     @DeleteMapping(path = "/profile/id")
     public ResponseEntity<String> deleteProfileById(@RequestBody Profile profile) {
 
-        if (!profileRepo.existsById(profile.userId())) {
-            log.debug("No user exist for user id: [ {} ]", profile.userId());
+        if (!profileRepo.existsById(profile.userId)) {
+            log.debug("No user exist for user id: [ {} ]", profile.userId);
         }
-        profileRepo.deleteById(profile.userId());
+        profileRepo.deleteById(profile.userId);
         return ResponseEntity.ok("User deleted");
     }
 
     @PostMapping("/profile/name")
     public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
 
-        if (req == null || req.firstName().isBlank()) {
+        if (req == null || req.firstName.isBlank()) {
             log.debug("Firstname is missing from the body...");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No params specified");
         }
 
-        return ResponseEntity.ok(profileRepo.getProfileByFirstName(req.firstName())
+        return ResponseEntity.ok(profileRepo.getProfileByFirstName(req.firstName)
                 .orElseThrow(() -> {
-                    log.debug("Nothing found under firstname : [ {} ]", req.firstName());
+                    log.debug("Nothing found under firstname : [ {} ]", req.firstName);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -62,7 +62,13 @@ public class ProfileController {
 
     @PostMapping(path = "/profile/random")
     public ResponseEntity<Profile> getRandomProfile(@RequestBody Profile req) {
-        return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile(req.gender())).orElseThrow(() -> {
+
+        if (req.gender.equals(Gender.MALE)) {
+            req.setGender(Gender.FEMALE);
+        } else {
+            req.setGender(Gender.MALE);
+        }
+        return ResponseEntity.ok(Optional.of(profileRepo.getRandomProfile(req.gender)).orElseThrow(() -> {
             log.debug("No profiles to return...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
@@ -73,7 +79,7 @@ public class ProfileController {
 
         System.out.println(req);
 
-        if (req == null || req.firstName().isBlank()) {
+        if (req == null || req.firstName.isBlank()) {
             log.debug("Empty body...");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }

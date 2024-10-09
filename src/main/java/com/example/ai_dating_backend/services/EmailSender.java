@@ -3,6 +3,7 @@ package com.example.ai_dating_backend.services;
 import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +11,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
+// TODO: It is not working because mailjs does not allow to send emails from servers... Need to be send from a browser
+@Slf4j
 @Service
 public class EmailSender {
 
@@ -26,24 +30,32 @@ public class EmailSender {
     @Value(value = "${spring.emailjs.uri}")
     String emailJSUri;
 
-    public HttpResponse<String> sendEmail(String fullName, String message) {
+    public HttpResponse<String> sendEmail(String email, String fullName, String message) {
 
-        String jsonString = buildEmailBody(fullName, message);
+        String jsonString = buildEmailBody(email, fullName, message);
+        log.info("JsonString for the email body {}", jsonString);
 
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(emailJSUri))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonString))
+                    .method("POST", HttpRequest.BodyPublishers.ofString(jsonString, StandardCharsets.UTF_8))
                     .build();
 
-            return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join();
+            HttpResponse<String> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString(), null).get();
+            log.info("Response body from call {}", response.body());
+
+            return  response;
+
+        } catch (Exception e) {
+            log.error("Failed to send email", e);
+            throw new RuntimeException(e);
         }
     }
 
-    private String buildEmailBody(String fullName, String message) {
+    private String buildEmailBody(String email, String fullName, String message) {
 
-        TemplateParams templateParams = new TemplateParams(fullName, message);
+        TemplateParams templateParams = new TemplateParams(email, fullName, message);
         Data data = new Data(service_id, template_id, user_id, templateParams);
 
         Gson gson = new Gson();
@@ -53,16 +65,17 @@ public class EmailSender {
 
 @AllArgsConstructor
 @Getter
- class Data {
+class Data {
     private String service_id;
     private String template_id;
     private String user_id;
-    private  TemplateParams template_params;
+    private TemplateParams template_params;
 }
 
 @AllArgsConstructor
 @Getter
 class TemplateParams {
+    private String to_email;
     private String to_name;
     private String message;
 }

@@ -2,6 +2,7 @@ package com.example.ai_dating_backend.user;
 
 import com.example.ai_dating_backend.profile.Gender;
 import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 
@@ -18,6 +19,8 @@ public record NewUser (
         @NonNull
         @Min(value = 8)
         String password,
+        @Nullable
+        String otp,
         @NonNull
         int age,
         @NonNull

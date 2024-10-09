@@ -22,7 +22,7 @@ public class CacheControllerFilter implements Filter {
         String uri = req.getRequestURI();
 
         if(uri.startsWith("/images/")) {
-            res.setHeader("Cache-Control", "public,max-age=31536000");
+            res.setHeader("Cache-Control", "public,max-age=3600");
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
