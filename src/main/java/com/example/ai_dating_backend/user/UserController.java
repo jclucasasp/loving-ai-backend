@@ -9,6 +9,7 @@ import com.example.ai_dating_backend.session.UserSession;
 import com.example.ai_dating_backend.session.UserSessionRepo;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -164,13 +165,14 @@ public class UserController {
 
         otpTimer(req.email());
 
-        final String message = "Please use this one time pin to reset your password. It will expire in 10 minutes";
+        final String message = "Please use this one time pin: [" + otp + "]  to reset your password on LovingAI. \nPlease note that it will expire in 10 minutes";
 
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
-        HttpResponse<String> httpResponse = emailSender.sendEmail(userFound.email(),  userProfile.getFirstName() + " " + userProfile.getLastName(), message);
+        HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(),
+                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), message);
 
-        return ResponseEntity.status(httpResponse.statusCode()).build();
+        return ResponseEntity.status(httpStatusCode).build();
     }
 
     @PostMapping(path = "/user/reset")

@@ -1,81 +1,51 @@
 package com.example.ai_dating_backend.services;
 
-import com.google.gson.Gson;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.w3c.dom.Text;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 // TODO: It is not working because mailjs does not allow to send emails from servers... Need to be send from a browser
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class EmailSender {
 
-    @Value(value = "${spring.emailjs.service-id}")
-    String service_id;
+    private final JavaMailSender mailSender;
+    @Value("${spring.mail.username}")
+    String fromEmail;
 
-    @Value(value = "${spring.emailjs.template-id}")
-    String template_id;
+    public HttpStatusCode sendEmail(String toEmail, String subject, String fullName, String message) {
 
-    @Value(value = "${spring.emailjs.user-id}")
-    String user_id;
+        String template = "Hi " + fullName + "\n"
+                + message  + "\n"
+                + "Warm Regards\n"
+                + "The LovingAI Team";
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
 
-    @Value(value = "${spring.emailjs.uri}")
-    String emailJSUri;
+            mimeMessage.setFrom(fromEmail);
+            mimeMessage.setRecipients(MimeMessage.RecipientType.TO, toEmail);
+            mimeMessage.setSubject(subject);
+            mimeMessage.setText(template);
 
-    public HttpResponse<String> sendEmail(String email, String fullName, String message) {
-
-        String jsonString = buildEmailBody(email, fullName, message);
-        log.info("JsonString for the email body {}", jsonString);
-
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(emailJSUri))
-                    .header("Content-Type", "application/json")
-                    .method("POST", HttpRequest.BodyPublishers.ofString(jsonString, StandardCharsets.UTF_8))
-                    .build();
-
-            HttpResponse<String> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString(), null).get();
-            log.info("Response body from call {}", response.body());
-
-            return  response;
-
-        } catch (Exception e) {
-            log.error("Failed to send email", e);
-            throw new RuntimeException(e);
+            mailSender.send(mimeMessage);
+        } catch (MessagingException m) {
+            log.error("Unable to send email: {}", m);
+            return HttpStatusCode.valueOf(400);
         }
+
+        return HttpStatusCode.valueOf(200);
     }
-
-    private String buildEmailBody(String email, String fullName, String message) {
-
-        TemplateParams templateParams = new TemplateParams(email, fullName, message);
-        Data data = new Data(service_id, template_id, user_id, templateParams);
-
-        Gson gson = new Gson();
-        return gson.toJson(data);
-    }
-}
-
-@AllArgsConstructor
-@Getter
-class Data {
-    private String service_id;
-    private String template_id;
-    private String user_id;
-    private TemplateParams template_params;
-}
-
-@AllArgsConstructor
-@Getter
-class TemplateParams {
-    private String to_email;
-    private String to_name;
-    private String message;
 }
