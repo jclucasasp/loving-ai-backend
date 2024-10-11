@@ -144,6 +144,7 @@ public class UserController {
         UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
 
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
+        log.info("User logged out");
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
