@@ -181,6 +181,7 @@ public class DataBaseService implements DataBaseServiceInterface {
                             passwordEncoder.encode("password"),
                             new Date(),
                             null,
+                            null,
                             null
                     ))
             );

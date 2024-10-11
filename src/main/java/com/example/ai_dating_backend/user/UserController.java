@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.net.http.HttpResponse;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
@@ -59,6 +58,7 @@ public class UserController {
 
     //TODO: Set the date offset.
     // https://reflectoring.io/spring-timezones/
+    // TODO: Create a welcome email for and otp for verification
     @PostMapping(path = "/user/create")
     ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
 
@@ -76,20 +76,18 @@ public class UserController {
         User user = new User(newUser.email(), hashedPassword);
         userRepo.save(user);
 
+        Profile newProfile;
+
         if (newUser.gender().equals(Gender.FEMALE)) {
-
-            Profile newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "women/".concat(newUser.imageUrl()), false, newUser.personalityTypeId());
-
-            profileRepo.save(newProfile);
+            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
+                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "women/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
 
         } else {
-
-            Profile newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "men/".concat(newUser.imageUrl()), false, newUser.personalityTypeId());
-
-            profileRepo.save(newProfile);
+            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
+                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "men/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
         }
+
+        profileRepo.save(newProfile);
 
         return ResponseEntity.ok(HttpStatus.CREATED);
     }
@@ -109,7 +107,7 @@ public class UserController {
 
         User userFound = findUserByEmail(req.email());
 
-        if (!encoder.matches(req.password(), userFound.password())) {
+        if (!encoder.matches(req.password(), userFound.password()) || userFound.end_date() != null) {
             log.debug("Unauthorised");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
@@ -138,7 +136,11 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        User userFound = findUserByEmail(req.email());
+        User userFound = userRepo.findById(req.id()).orElseThrow(() -> {
+            log.error("No user found for id [{}]", req.id());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+                });
+
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
         UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
@@ -157,6 +159,10 @@ public class UserController {
         }
 
         User userFound = findUserByEmail(req.email());
+
+        if (userFound.end_date() != null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         String otp = otpGenerator.generateOTP(6);
         log.info("OTP [{}] generated for email [{}]", otp, req.email());
@@ -194,7 +200,8 @@ public class UserController {
                 encoder.encode(req.password()),
                 userFound.create_date(),
                 userFound.end_date(),
-                new Date()
+                new Date(),
+                null
         );
 
         userRepo.save(updatedUser);

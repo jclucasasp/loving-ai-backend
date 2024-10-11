@@ -19,10 +19,12 @@ public record User (
         @Nullable
         Date end_date,
         @Nullable
-        Date passwordResetDate
+        Date passwordResetDate,
+        @Nullable
+        Boolean active
 ) {
 
     public User(String email, String password) {
-        this(UUID.randomUUID().toString(), email, password, new Date(), null, null);
+        this(UUID.randomUUID().toString(), email, password, new Date(), null, null, null);
     }
 }

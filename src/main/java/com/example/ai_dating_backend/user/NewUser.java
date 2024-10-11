@@ -31,5 +31,5 @@ public record NewUser (
         String bio,
         String imageUrl,
         @NonNull
-        String personalityTypeId
+        String myersBriggsPersonalityType
 ) {}
