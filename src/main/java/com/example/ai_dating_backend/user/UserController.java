@@ -14,8 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.*;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
@@ -58,38 +60,63 @@ public class UserController {
 
     //TODO: Set the date offset.
     // https://reflectoring.io/spring-timezones/
-    // TODO: Create a welcome email for and otp for verification
+    //TODO: Create a welcome email for and otp for verification
+    //TODO: Set the path for the file
     @PostMapping(path = "/user/create")
-    ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
+    ResponseEntity<String> createNewUser(
+            @RequestParam("firstName") String firstName,
+            @RequestParam("lastName") String lastName,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam(value = "otp", required = false) String otp,
+            @RequestParam("age") int age,
+            @RequestParam("ethnicity") String ethnicity,
+            @RequestParam("gender") Gender gender,
+            @RequestParam("bio") String bio,
+            @RequestParam(value = "image", required = false) MultipartFile imageFile,
+            @RequestParam("myersBriggsPersonalityType") String myersBriggsPersonalityType
+    ) {
 
-        if (newUser.email().isBlank()) {
+        if (email.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        if (userRepo.existsAllByEmail(newUser.email())) {
-            log.debug("Email : {} already exist...", newUser.email());
+        if (userRepo.existsAllByEmail(email)) {
+            log.debug("Email : {} already exist...", email);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
-        String hashedPassword = encoder.encode(newUser.password());
+        String imageName = UUID.randomUUID().toString().concat(".jpeg");
 
-        User user = new User(newUser.email(), hashedPassword);
+        if (!imageFile.isEmpty()) {
+            try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(imageName))) {
+                stream.write(imageFile.getBytes());
+                log.info("Success writing image.jpeg");
+            } catch (IOException e) {
+                log.error("Unable to safe file with exception: ", e);
+                return ResponseEntity.internalServerError().body("Unable to save image");
+            }
+        }
+
+        String hashedPassword = encoder.encode(password);
+
+        User user = new User(email, hashedPassword);
         userRepo.save(user);
 
         Profile newProfile;
 
-        if (newUser.gender().equals(Gender.FEMALE)) {
-            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "women/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
+        if (gender.equals(Gender.FEMALE)) {
+            newProfile = new Profile(user.id(), firstName, lastName, age,
+                    ethnicity, gender, bio, "women/".concat(imageName), false, myersBriggsPersonalityType);
 
         } else {
-            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "men/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
+            newProfile = new Profile(user.id(), firstName, lastName, age,
+                    ethnicity, gender, bio, "men/".concat(imageName), false, myersBriggsPersonalityType);
         }
 
         profileRepo.save(newProfile);
 
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.ok("User " + firstName + " " + lastName + " created");
     }
 
     @DeleteMapping(path = "/user/delete")
@@ -139,7 +166,7 @@ public class UserController {
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> {
             log.error("No user found for id [{}]", req.id());
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
-                });
+        });
 
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
@@ -161,7 +188,7 @@ public class UserController {
 
         User userFound = findUserByEmail(req.email());
 
-        if (userFound.end_date() != null){
+        if (userFound.end_date() != null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
