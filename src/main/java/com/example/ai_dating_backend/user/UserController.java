@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
@@ -61,7 +62,6 @@ public class UserController {
     //TODO: Set the date offset.
     // https://reflectoring.io/spring-timezones/
     //TODO: Create a welcome email for and otp for verification
-    //TODO: Set the path for the file
     @PostMapping(path = "/user/create")
     ResponseEntity<String> createNewUser(
             @RequestParam("firstName") String firstName,
@@ -87,9 +87,10 @@ public class UserController {
         }
 
         String imageName = UUID.randomUUID().toString().concat(".jpeg");
+        Path path = Path.of("src/main/resources/static/images/"+gender.toString().toLowerCase()+"/"+imageName);
 
         if (!imageFile.isEmpty()) {
-            try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(imageName))) {
+            try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(path.toFile()))) {
                 stream.write(imageFile.getBytes());
                 log.info("Success writing image.jpeg");
             } catch (IOException e) {
