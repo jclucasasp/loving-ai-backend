@@ -238,6 +238,7 @@ public class DataBaseService implements DataBaseServiceInterface {
                 default -> System.out.println("No matches");
             }
         });
+        log.info("Seeding complete");
     }
 
     private void InsertDescription(PersonalitiesTypes type, String desc) {

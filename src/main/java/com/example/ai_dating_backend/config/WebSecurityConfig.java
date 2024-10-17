@@ -20,8 +20,8 @@ public class WebSecurityConfig {
 
     @Bean
     public InMemoryUserDetailsManager userDetailsManager() {
-        UserDetails user = User.withUsername("lovingAi")
-                .password(passwordEncoder().encode("w1!JpzXJ"))
+        UserDetails user = User.withUsername("tinder")
+                .password(passwordEncoder().encode("Password"))
                 .build();
         return new InMemoryUserDetailsManager(user);
     }
