@@ -13,7 +13,6 @@ TinderAiBackendApplication implements CommandLineRunner {
 
     final DataBaseService dataBaseHelper;
 
-   //TODO: Change the personalityTypeId() to point to the personalityTypeId in the profiles.f.json file and fix it in the databaseHelper file
     public static void main(String[] args) {
         SpringApplication.run(TinderAiBackendApplication.class, args);
     }
