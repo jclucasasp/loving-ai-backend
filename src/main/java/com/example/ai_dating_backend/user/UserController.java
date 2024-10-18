@@ -4,6 +4,7 @@ import com.example.ai_dating_backend.profile.Gender;
 import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
 import com.example.ai_dating_backend.services.EmailSender;
+import com.example.ai_dating_backend.services.FileCopier;
 import com.example.ai_dating_backend.services.PasswordAndOTPGenerator;
 import com.example.ai_dating_backend.session.UserSession;
 import com.example.ai_dating_backend.session.UserSessionRepo;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -30,16 +32,18 @@ public class UserController {
     private final UserSessionRepo sessionRepo;
     private final EmailSender emailSender;
     private final ProfileRepo profileRepo;
+    private final FileCopier fileCopier;
     private final UserRepo userRepo;
     private final Map<String, String> userOtpHashMap = new HashMap<>();
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.sessionRepo = sessionRepo;
         this.otpGenerator = otpGenerator;
         this.emailSender = emailSender;
+        this.fileCopier = fileCopier;
         this.encoder = new BCryptPasswordEncoder();
     }
 
@@ -86,17 +90,11 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
-        String imageName = UUID.randomUUID().toString().concat(".jpeg");
-        Path path = Path.of("src/main/resources/static/images/"+gender.toString().toLowerCase()+"/"+imageName);
+        String fileName = UUID.randomUUID().toString().concat(".jpg");
+        boolean imageSaved = fileCopier.createFile(imageFile,fileName, gender.toString().toLowerCase());
 
-        if (!imageFile.isEmpty()) {
-            try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(path.toFile()))) {
-                stream.write(imageFile.getBytes());
-                log.info("Success writing image.jpeg");
-            } catch (IOException e) {
-                log.error("Unable to safe file with exception: ", e);
-                return ResponseEntity.internalServerError().body("Unable to save image");
-            }
+        if (!imageSaved) {
+            return ResponseEntity.internalServerError().build();
         }
 
         String hashedPassword = encoder.encode(password);
@@ -108,11 +106,11 @@ public class UserController {
 
         if (gender.equals(Gender.FEMALE)) {
             newProfile = new Profile(user.id(), firstName, lastName, age,
-                    ethnicity, gender, bio, "women/".concat(imageName), false, myersBriggsPersonalityType);
+                    ethnicity, gender, bio, "women/".concat(fileName), false, myersBriggsPersonalityType);
 
         } else {
             newProfile = new Profile(user.id(), firstName, lastName, age,
-                    ethnicity, gender, bio, "men/".concat(imageName), false, myersBriggsPersonalityType);
+                    ethnicity, gender, bio, "men/".concat(fileName), false, myersBriggsPersonalityType);
         }
 
         profileRepo.save(newProfile);
