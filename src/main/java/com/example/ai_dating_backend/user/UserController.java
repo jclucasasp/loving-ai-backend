@@ -4,6 +4,7 @@ import com.example.ai_dating_backend.profile.Gender;
 import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
 import com.example.ai_dating_backend.services.EmailSender;
+import com.example.ai_dating_backend.services.FileCopier;
 import com.example.ai_dating_backend.services.PasswordAndOTPGenerator;
 import com.example.ai_dating_backend.session.UserSession;
 import com.example.ai_dating_backend.session.UserSessionRepo;
@@ -14,8 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
@@ -27,16 +32,18 @@ public class UserController {
     private final UserSessionRepo sessionRepo;
     private final EmailSender emailSender;
     private final ProfileRepo profileRepo;
+    private final FileCopier fileCopier;
     private final UserRepo userRepo;
     private final Map<String, String> userOtpHashMap = new HashMap<>();
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.sessionRepo = sessionRepo;
         this.otpGenerator = otpGenerator;
         this.emailSender = emailSender;
+        this.fileCopier = fileCopier;
         this.encoder = new BCryptPasswordEncoder();
     }
 
@@ -58,38 +65,57 @@ public class UserController {
 
     //TODO: Set the date offset.
     // https://reflectoring.io/spring-timezones/
-    // TODO: Create a welcome email for and otp for verification
+    //TODO: Create a welcome email for and otp for verification
     @PostMapping(path = "/user/create")
-    ResponseEntity<HttpStatus> createNewUser(@RequestBody NewUser newUser) {
+    ResponseEntity<String> createNewUser(
+            @RequestParam("firstName") String firstName,
+            @RequestParam("lastName") String lastName,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam(value = "otp", required = false) String otp,
+            @RequestParam("age") int age,
+            @RequestParam("ethnicity") String ethnicity,
+            @RequestParam("gender") Gender gender,
+            @RequestParam("bio") String bio,
+            @RequestParam(value = "image", required = false) MultipartFile imageFile,
+            @RequestParam("myersBriggsPersonalityType") String myersBriggsPersonalityType
+    ) {
 
-        if (newUser.email().isBlank()) {
+        if (email.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        if (userRepo.existsAllByEmail(newUser.email())) {
-            log.debug("Email : {} already exist...", newUser.email());
+        if (userRepo.existsAllByEmail(email)) {
+            log.debug("Email : {} already exist...", email);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
-        String hashedPassword = encoder.encode(newUser.password());
+        String fileName = UUID.randomUUID().toString().concat(".jpg");
+        boolean imageSaved = fileCopier.createFile(imageFile,fileName, gender.toString().toLowerCase());
 
-        User user = new User(newUser.email(), hashedPassword);
+        if (!imageSaved) {
+            return ResponseEntity.internalServerError().build();
+        }
+
+        String hashedPassword = encoder.encode(password);
+
+        User user = new User(email, hashedPassword);
         userRepo.save(user);
 
         Profile newProfile;
 
-        if (newUser.gender().equals(Gender.FEMALE)) {
-            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "women/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
+        if (gender.equals(Gender.FEMALE)) {
+            newProfile = new Profile(user.id(), firstName, lastName, age,
+                    ethnicity, gender, bio, "women/".concat(fileName), false, myersBriggsPersonalityType);
 
         } else {
-            newProfile = new Profile(user.id(), newUser.firstName(), newUser.lastName(), newUser.age(),
-                    newUser.ethnicity(), newUser.gender(), newUser.bio(), "men/".concat(newUser.imageUrl()), false, newUser.myersBriggsPersonalityType());
+            newProfile = new Profile(user.id(), firstName, lastName, age,
+                    ethnicity, gender, bio, "men/".concat(fileName), false, myersBriggsPersonalityType);
         }
 
         profileRepo.save(newProfile);
 
-        return ResponseEntity.ok(HttpStatus.CREATED);
+        return ResponseEntity.ok("User " + firstName + " " + lastName + " created");
     }
 
     @DeleteMapping(path = "/user/delete")
@@ -139,7 +165,7 @@ public class UserController {
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> {
             log.error("No user found for id [{}]", req.id());
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
-                });
+        });
 
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
@@ -161,7 +187,7 @@ public class UserController {
 
         User userFound = findUserByEmail(req.email());
 
-        if (userFound.end_date() != null){
+        if (userFound.end_date() != null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
