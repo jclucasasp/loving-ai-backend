@@ -33,15 +33,14 @@ public class ResponseService implements ResponseServiceInterface {
     @Async("chatResponseExecutor")
     @Override
     // to implement streaming, just change to CompletableFuture<Flux><String>>
-    public CompletableFuture<String> generateChatResponse(Response res) {
+    public CompletableFuture<String> generateChatResponse(Response res, String matchId) {
 
         return CompletableFuture.supplyAsync(() -> {
             prompt = promptGenerator.generatedChatPrompt(res);
 
-            String userId = res.userId();
-            ChatMemory chatMemory = getUserSpecificMemory(userId);
+            ChatMemory chatMemory = getUserSpecificMemory(matchId);
 
-            log.info("\nGenerating chat response for user [{}] on thread {}", userId, Thread.currentThread().getName());
+            log.info("\nGenerating chat response for user [{}] on thread {}", res.name(), Thread.currentThread().getName());
 
             try {
                 log.info("Generating prompt with prompt: {} ", prompt);
@@ -66,14 +65,14 @@ public class ResponseService implements ResponseServiceInterface {
     }
 
     @Override
-    public ChatMemory getChatMemory(String userId) {
-        return userChatMemories.getOrDefault(userId, new InMemoryChatMemory());
+    public ChatMemory getChatMemory(String chatId) {
+        return userChatMemories.getOrDefault(chatId, new InMemoryChatMemory());
     }
 
     @Override
-    public ChatMemory getUserSpecificMemory(String userId) {
-        ChatMemory chatMemory = getChatMemory(userId);
-        setChatMemory(userId, chatMemory);
+    public ChatMemory getUserSpecificMemory(String chatId) {
+        ChatMemory chatMemory = getChatMemory(chatId);
+        setChatMemory(chatId, chatMemory);
         return chatMemory;
     }
 }

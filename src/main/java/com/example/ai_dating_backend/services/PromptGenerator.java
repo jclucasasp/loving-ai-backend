@@ -24,7 +24,8 @@ public class PromptGenerator {
                 .append("\nYour Personality type: ").append(personalityType).append(".")
                 .append("\nYour responses will be based off your gender, ethnicity, personality type, bio and age.")
                 .append("\nYou do have a profile picture on this dating site.")
-                .append("\nIt is okay for you to go off script every now and again");
+                .append("\nYou would be chatting with the opposite of your gender.")
+                .append("\nIt is okay for you to go off script every now and again.");
 
         String extraConfig = extraConfigBuilder.toString();
 

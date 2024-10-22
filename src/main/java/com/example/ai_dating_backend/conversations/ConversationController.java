@@ -65,7 +65,7 @@ public class ConversationController {
         });
 
         // generate a response from the Ai
-        String conversationResponse = responseService.generateChatResponse(req).get();
+        String conversationResponse = responseService.generateChatResponse(req, matchId).get();
 
         // saving the current conversation on the user side
         fromConversation.messages()
