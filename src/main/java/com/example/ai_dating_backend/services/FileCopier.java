@@ -27,7 +27,7 @@ public class FileCopier {
 
         try {
             log.info("Attempting to save image [{}] to disk...",file.getName());
-            Files.copy(file.getInputStream(),Path.of("src/main/resources/static/images/",gender,"/",fileName));
+            Files.copy(file.getInputStream(),Path.of("images/",gender,"/",fileName));
         } catch (IOException io) {
             log.error("Unable to write file with exception: ", io);
             return false;
