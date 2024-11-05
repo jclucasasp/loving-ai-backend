@@ -1,8 +1,5 @@
 package com.example.ai_dating_backend.services;
 
-import com.example.ai_dating_backend.conversations.ChatMessage;
-import com.example.ai_dating_backend.conversations.Conversation;
-import com.example.ai_dating_backend.conversations.ConversationRepo;
 import com.example.ai_dating_backend.responses.Response;
 import com.example.ai_dating_backend.services.interfaces.ResponseServiceInterface;
 import lombok.RequiredArgsConstructor;
@@ -11,18 +8,14 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
-import org.springframework.ai.chat.messages.Message;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Log4j2
 @Service

@@ -1,4 +1,3 @@
-HELP.md
 *.txt
 target/
 !.mvn/wrapper/maven-wrapper.jar
@@ -35,5 +34,6 @@ build/
 
 ### Env ###
 .env
+application.properties
 *.json
 /src/main/resources/static/images/
