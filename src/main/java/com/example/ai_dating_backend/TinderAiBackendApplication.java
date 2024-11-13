@@ -24,21 +24,8 @@ TinderAiBackendApplication implements CommandLineRunner {
     public void run(String... args) {
 //        s3Service.uploadFile(Path.of("src/main/resources/static/images/women/0b1273d4-ab2f-4edd-858b-6f1ff1071fb9.jpg"));
 //        dataBaseHelper.updateAndSaveProfiles();
-//        dataBaseHelper.purgeData();
-//        dataBaseHelper.seedDataBase();
-//        dataBaseHelper.seedPersonalities();
 
-//        int count = 0;
-//        while(count < 50 ) {
-//            try {
-//                Future<String> future = responseService.generateChatResponse(new Prompt("What can you do?"));
-//                System.out.println(future.get());
-//            } catch (Exception e) {
-//                throw new RuntimeException(e);
-//            }
-//            count++;
-//            System.out.println("Loop number: [ "+count+" ]");
-//        }
+        dataBaseHelper.purgeData();
     }
 
 }

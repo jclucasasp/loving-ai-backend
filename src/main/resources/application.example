@@ -41,4 +41,4 @@ spring.cloud.aws.secret.access.key=
 spring.cloud.aws.region=
 spring.cloud.aws.bucket=l
 
-spring.json.profile.file.name=
+spring.json.profile.folder.name=profiles

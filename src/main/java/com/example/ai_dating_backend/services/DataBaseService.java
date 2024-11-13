@@ -5,7 +5,6 @@ import com.example.ai_dating_backend.matches.MatchRepo;
 import com.example.ai_dating_backend.personalities.*;
 import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
-import com.example.ai_dating_backend.services.interfaces.DataBaseServiceInterface;
 import com.example.ai_dating_backend.session.UserSessionRepo;
 import com.example.ai_dating_backend.user.User;
 import com.example.ai_dating_backend.user.UserRepo;
@@ -25,14 +24,13 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
-// TODO: Replace the personality types in the json file to use the id of the personality types as well as in the ResponseService class
 @Log4j2
 @Service
-public class DataBaseService implements DataBaseServiceInterface {
+public class DataBaseService  {
 
     // Make sure the correct file in the .properties before running...
-    @Value("${spring.json.profile.file.name}")
-    private String PROFILES_JSON_FILE;
+    @Value("${spring.json.profile.folder.name}")
+    private String PROFILES_FOLDER;
 
     private final UserSessionRepo sessionRepo;
     private final UserRepo userRepo;
@@ -59,9 +57,16 @@ public class DataBaseService implements DataBaseServiceInterface {
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
-    @Override
     public void purgeData() {
         log.info("Going to purge data from database...");
+
+        long count = profileRepo.count();
+
+        if (count != 0) {
+            log.info("Database is already seeded...");
+            return;
+        }
+
         log.info("Attempting to purge all Sessions...");
         sessionRepo.deleteAll();
         log.info("All sessions deleted");
@@ -82,73 +87,98 @@ public class DataBaseService implements DataBaseServiceInterface {
         conversationRepo.deleteAll();
         log.info("All conversations deleted");
 
-        log.info("Database no purged and ready to be seeded...");
+        seedDataBase();
+
+        long typesCount = typesRepo.count();
+        long descriptionCount = descriptionRepo.count();
+
+        if (typesCount != 0 && descriptionCount != 0) {
+            log.info("Personalities already seeded...");
+            return;
+        }
+
+        log.info("Going to purge personalities types from db...");
+        typesRepo.deleteAll();
+        descriptionRepo.deleteAll();
+
+        seedPersonalities();
+
+        log.info("Database seeded...");
     }
 
-    @Override
     public void updateAndSaveProfiles() {
-        log.info("Json file to process: [{}]", PROFILES_JSON_FILE);
+
+        File[] profiles = GetProfiles();
+        if (profiles == null) {
+            log.error("No files in folder [{}]...", PROFILES_FOLDER);
+            return;
+        }
+
         try {
             log.info("Attempting to read json files and create a list of profiles...");
-            List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
-            }.getType());
-            log.info("Profile list created from file, attempting to update Profiles...");
 
-            if (PROFILES_JSON_FILE.contains("females")) {
-                log.info("Creating females list...");
-                List<Profile> updatedList = profileList.stream().map(p -> {
-                    if (!p.isAi()) {
-                        return new Profile(UUID.randomUUID().toString(),
-                                p.getFirstName(),
-                                p.getLastName(),
-                                p.getAge(),
-                                p.getEthnicity(),
-                                p.getGender(),
-                                p.getBio(),
-                                "women/".concat(p.getImageUrl()),
-                                true,
-                                p.getMyersBriggsPersonalityType());
-                    } else {
-                        return p;
-                    }
-                }).toList();
+            for (File profile : profiles) {
+                List<Profile> profileList = gson.fromJson(new FileReader(profile), new TypeToken<List<Profile>>() {
+                }.getType());
+                log.info("Profile list created from file, attempting to update Profiles...");
 
-                writeUpdatedJsonList(updatedList);
+                if (profile.getName().equals("profiles.females.json")) {
+                    log.info("Creating females list...");
+                    List<Profile> updatedList = profileList.stream().map(p -> {
+                        if (!p.isAi()) {
+                            return new Profile(UUID.randomUUID().toString(),
+                                    p.getFirstName(),
+                                    p.getLastName(),
+                                    p.getAge(),
+                                    p.getEthnicity(),
+                                    p.getGender(),
+                                    p.getBio(),
+                                    "women/".concat(p.getImageUrl()),
+                                    true,
+                                    p.getMyersBriggsPersonalityType());
+                        } else {
+                            return p;
+                        }
+                    }).toList();
 
-            } else {
-                log.info("Creating males list...");
-                List<Profile> updatedList = profileList.stream().map(p -> {
-                    if (!p.isAi()) {
-                        return new Profile(UUID.randomUUID().toString(),
-                                p.getFirstName(),
-                                p.getLastName(),
-                                p.getAge(),
-                                p.getEthnicity(),
-                                p.getGender(),
-                                p.getBio(),
-                                "men/".concat(p.getImageUrl()),
-                                true,
-                                p.getMyersBriggsPersonalityType());
-                    } else {
-                        return p;
-                    }
-                }).toList();
+                    writeUpdatedJsonList(updatedList, profile.getName());
 
-                writeUpdatedJsonList(updatedList);
+                } else {
+                    log.info("Creating males list...");
+                    List<Profile> updatedList = profileList.stream().map(p -> {
+                        if (!p.isAi()) {
+                            return new Profile(UUID.randomUUID().toString(),
+                                    p.getFirstName(),
+                                    p.getLastName(),
+                                    p.getAge(),
+                                    p.getEthnicity(),
+                                    p.getGender(),
+                                    p.getBio(),
+                                    "men/".concat(p.getImageUrl()),
+                                    true,
+                                    p.getMyersBriggsPersonalityType());
+                        } else {
+                            return p;
+                        }
+                    }).toList();
+
+                    writeUpdatedJsonList(updatedList, profile.getName());
+                }
             }
 
-        } catch (IOException io) {
-            log.error("Unable to process file: ", io);
-        }
+            } catch(IOException io){
+                log.error("Unable to process file: ", io);
+            }
+
     }
 
-    private void writeUpdatedJsonList(List<Profile> updatedProfiles) {
+    private void writeUpdatedJsonList(List<Profile> updatedProfiles, String fileName) {
         log.info("Attempting to convert updated profiles to a json file...");
         Gson gsonWriter = new GsonBuilder().setPrettyPrinting().create();
         Type type = new TypeToken<List<Profile>>() {
         }.getType();
 
-        File file = new File(PROFILES_JSON_FILE + ".updated.json");
+        File file = new File(fileName + ".updated.json");
 
         try (FileWriter writer = new FileWriter(file);) {
             log.info("Attempting to write updated profiles back to a json file...");
@@ -159,35 +189,47 @@ public class DataBaseService implements DataBaseServiceInterface {
         }
     }
 
-    @Override
-    public void seedDataBase() {
+
+    private void seedDataBase() {
         log.info("Attempting to seed database...");
+
+        File[] profiles = GetProfiles();
+
+        if (profiles == null) {
+            log.error("No files in folder [{}]...", PROFILES_FOLDER);
+            return;
+        }
+
         log.info("Attempting to read updated json files and create a list of profiles...");
 
         try {
-            List<Profile> profileList = gson.fromJson(new FileReader(PROFILES_JSON_FILE), new TypeToken<List<Profile>>() {
-            }.getType());
-            log.info("Profile list created from file, attempting to save Profiles to database...");
+            for (File profile: profiles) {
 
-            profileRepo.saveAll(profileList);
-            log.info("Profiles saved...");
+                List<Profile> profileList = gson.fromJson(new FileReader(profile), new TypeToken<List<Profile>>() {
+                }.getType());
+                log.info("Profile list created from file, attempting to save Profiles to database...");
 
-            log.info("Attempting to create Users from Profiles...");
-            List<User> userList = new ArrayList<>();
-            profileList.forEach(profile -> userList.add(
-                    new User(
-                            profile.getUserId(),
-                            profile.getFirstName().toLowerCase().concat(profile.getLastName().toLowerCase()).concat("@nomail.com"),
-                            passwordEncoder.encode("password"),
-                            new Date(),
-                            null,
-                            null,
-                            null
-                    ))
-            );
-            log.info("Users created from, attempting to save to database...");
-            userRepo.saveAll(userList);
-            log.info("Users saved to database...");
+                profileRepo.saveAll(profileList);
+                log.info("Profiles saved...");
+
+                log.info("Attempting to create Users from Profiles...");
+                List<User> userList = new ArrayList<>();
+                profileList.forEach(p -> userList.add(
+                        new User(
+                                p.getUserId(),
+                                p.getFirstName().toLowerCase().concat(p.getLastName().toLowerCase()).concat("@nomail.com"),
+                                passwordEncoder.encode("password"),
+                                new Date(),
+                                null,
+                                null,
+                                null
+                        ))
+                );
+                log.info("Users created from, attempting to save to database...");
+                userRepo.saveAll(userList);
+                log.info("Users saved to database...");
+            }
+
         } catch (Exception e) {
             log.error("Unable to read json file error: \n", e);
         }
@@ -195,11 +237,8 @@ public class DataBaseService implements DataBaseServiceInterface {
         log.info("Database seeded successfully...");
     }
 
-    @Override
-    public void seedPersonalities() {
-        log.info("Going to purge personalities types from db...");
-        typesRepo.deleteAll();
-        descriptionRepo.deleteAll();
+
+    private void seedPersonalities() {
 
         log.info("Attempting to seed personalities...");
         Arrays.stream(TypesEnum.values()).forEach(p -> {
@@ -243,6 +282,19 @@ public class DataBaseService implements DataBaseServiceInterface {
 
     private void InsertDescription(PersonalitiesTypes type, String desc) {
         descriptionRepo.insert(new PersonalityDescription(type.id(), desc));
+    }
+
+    private File[] GetProfiles() {
+
+        log.info("Getting a list of profiles from folder: [{}]", PROFILES_FOLDER);
+        File filePath = new File(PROFILES_FOLDER);
+
+        if(!filePath.exists() || !filePath.isDirectory()){
+            log.error("Folder [{}] does not exist...", PROFILES_FOLDER);
+            return null;
+        }
+
+        return filePath.listFiles();
     }
 
 }
