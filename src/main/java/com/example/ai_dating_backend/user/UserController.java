@@ -5,6 +5,7 @@ import com.example.ai_dating_backend.profile.Profile;
 import com.example.ai_dating_backend.profile.ProfileRepo;
 import com.example.ai_dating_backend.services.EmailSender;
 import com.example.ai_dating_backend.services.FileCopier;
+import com.example.ai_dating_backend.services.OTPService;
 import com.example.ai_dating_backend.services.PasswordAndOTPGenerator;
 import com.example.ai_dating_backend.session.UserSession;
 import com.example.ai_dating_backend.session.UserSessionRepo;
@@ -18,9 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 @CrossOrigin(origins = "*")
@@ -34,10 +32,10 @@ public class UserController {
     private final ProfileRepo profileRepo;
     private final FileCopier fileCopier;
     private final UserRepo userRepo;
-    private final Map<String, String> userOtpHashMap = new HashMap<>();
+    private final OTPService otpService;
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.sessionRepo = sessionRepo;
@@ -45,6 +43,7 @@ public class UserController {
         this.emailSender = emailSender;
         this.fileCopier = fileCopier;
         this.encoder = new BCryptPasswordEncoder();
+        this.otpService = new OTPService();
     }
 
     @GetMapping(path = "/user/{email}", params = "email")
@@ -91,7 +90,7 @@ public class UserController {
         }
 
         String fileName = UUID.randomUUID().toString().concat(".jpg");
-        boolean imageSaved = fileCopier.createFile(imageFile,fileName, gender.toString().toLowerCase());
+        boolean imageSaved = fileCopier.createFile(imageFile, fileName, gender.toString().toLowerCase());
 
         if (!imageSaved) {
             return ResponseEntity.internalServerError().build();
@@ -106,11 +105,11 @@ public class UserController {
 
         if (gender.equals(Gender.FEMALE)) {
             newProfile = new Profile(user.id(), firstName, lastName, age,
-                    ethnicity, gender, bio, "women/".concat(fileName), false, myersBriggsPersonalityType);
+                    ethnicity, gender, bio, "women/".concat(fileName), false, false, myersBriggsPersonalityType);
 
         } else {
             newProfile = new Profile(user.id(), firstName, lastName, age,
-                    ethnicity, gender, bio, "men/".concat(fileName), false, myersBriggsPersonalityType);
+                    ethnicity, gender, bio, "men/".concat(fileName), false, false, myersBriggsPersonalityType);
         }
 
         profileRepo.save(newProfile);
@@ -127,7 +126,7 @@ public class UserController {
     @PostMapping("/user/login")
     public ResponseEntity<Profile> userLogin(@RequestBody User req) {
 
-        if (req.email() == null) {
+        if (req.email().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
@@ -158,7 +157,7 @@ public class UserController {
     @PostMapping(path = "/user/logout")
     public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
 
-        if (req.id() == null) {
+        if (req.id().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
@@ -181,7 +180,7 @@ public class UserController {
     public ResponseEntity<HttpStatus> Otp(@RequestBody User req) {
 
         log.info("Incoming OTP request for [{}]", req.email());
-        if (req.email() == null) {
+        if (req.email().isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
@@ -194,18 +193,37 @@ public class UserController {
         String otp = otpGenerator.generateOTP(6);
         log.info("OTP [{}] generated for email [{}]", otp, req.email());
 
-        userOtpHashMap.put(userFound.email(), otp);
+        otpService.setOtpHashMap(userFound.email(), otp);
 
-        otpTimer(req.email());
+        otpService.otpTimer(req.email());
 
-        final String message = "Please use this one time pin: [" + otp + "]  to reset your password on LovingAI. \nPlease note that it will expire in 10 minutes";
+        final String message1 = "Please use this one time pin: " + otp + " to reset your password on Loving AI. \nPlease note that it will expire in 10 minutes!";
+        final String message2 = "Please use this one time pin: " + otp + " to activate your profile on Loving AI. \nPlease note that it will expire in 10 minutes!";
 
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
         HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(),
-                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), message);
+                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), Boolean.TRUE.equals(req.active()) ? message1 : message2);
 
         return ResponseEntity.status(httpStatusCode).build();
+    }
+
+    @PostMapping(path = "/user/activate")
+    public ResponseEntity<HttpStatus> userActivate(@RequestBody NewUser req) {
+
+        if (req.email().isBlank() || Objects.requireNonNull(req.otp()).isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        User userFound = findUserByEmail(req.email());
+
+        if (!req.otp().equals(otpService.getOtpHasMap(userFound.email()))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        profileRepo.findFirstAndUpdateVerified(userFound.id(), true);
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(path = "/user/reset")
@@ -217,7 +235,7 @@ public class UserController {
 
         User userFound = findUserByEmail(req.email());
 
-        if (!userOtpHashMap.get(req.email()).equals(req.otp())) {
+        if (!otpService.getOtpHasMap(req.email()).equals(req.otp())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
@@ -241,21 +259,5 @@ public class UserController {
             log.error("No user found for email: [{}]", email);
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
-    }
-
-    private void otpTimer(String userEmail) {
-
-        log.info("OTP Timer started for user: [{}]", userEmail);
-        Timer timer = new Timer(userEmail);
-
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                log.info("OTP expired for user: [{}]", userEmail);
-                userOtpHashMap.remove(userEmail);
-            }
-        };
-        // expires after 10 minutes
-        timer.schedule(task, 600000);
     }
 }

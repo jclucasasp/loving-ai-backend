@@ -23,7 +23,7 @@ public class EmailSender {
         String template = "Hi " + fullName + "\n\n"
                 + message + "\n\n"
                 + "Warm Regards\n"
-                + "The LovingAI Team";
+                + "The Loving AI Team";
         log.info("Attempting to send an email to {}", toEmail);
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();

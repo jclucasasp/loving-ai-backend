@@ -217,8 +217,8 @@ public class DataBaseService  {
                 profileList.forEach(p -> userList.add(
                         new User(
                                 p.getUserId(),
-                                p.getFirstName().toLowerCase().concat(p.getLastName().toLowerCase()).concat("@nomail.com"),
-                                passwordEncoder.encode("password"),
+                                p.getFirstName().toLowerCase().concat(p.getLastName().toLowerCase()).concat("@noemail.com"),
+                                passwordEncoder.encode("1Ms#&qRL"),
                                 new Date(),
                                 null,
                                 null,

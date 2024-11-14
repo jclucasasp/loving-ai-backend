@@ -23,5 +23,6 @@ public class Profile {
         String bio;
         String imageUrl;
         boolean ai;
+        boolean verified;
         String myersBriggsPersonalityType;
 }

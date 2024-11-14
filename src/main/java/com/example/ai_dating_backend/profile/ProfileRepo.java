@@ -20,4 +20,9 @@ public interface ProfileRepo extends MongoRepository<Profile, String> {
             "{$sample:{size:1}}"
     })
     Profile getRandomProfile(Gender gender);
+
+    @Query("{'userId':?0}")
+    @Update("{'$set':{'verified':?1}}")
+    void findFirstAndUpdateVerified(String userId, boolean verified);
 }
+
