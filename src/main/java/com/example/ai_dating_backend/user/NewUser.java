@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.beans.Transient;
 
 public record NewUser (
+        @Nullable
+        String userId,
         @Min(value = 2)
         @NonNull
         String firstName,

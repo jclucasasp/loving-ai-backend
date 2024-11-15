@@ -21,6 +21,9 @@ public interface UserRepo extends MongoRepository<User, String> {
     @Query("{'id':?0}")
     @Update("{'$set':{'active':?1}}")
     void findFirstByIdAndUpdate(String id, boolean active);
+
+    @Query("{'id':?0}")
+    Optional<User> getUserById(String id);
 }
 
 

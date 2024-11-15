@@ -18,13 +18,15 @@ public class OTPService {
         return otpHashMap.get(email);
     }
 
-    public void setOtpHashMap(String email, String otp) {
-        otpHashMap.put(email, otp);
-    }
-
-    public void otpTimer(String userEmail) {
+    public void otpTimer(String userEmail, String otp) {
 
         log.info("OTP Timer started for user: [{}]", userEmail);
+
+        if (otpHashMap.get(userEmail) == null) {
+            log.info("OTP already exist, doing nothing...");
+        }
+        otpHashMap.putIfAbsent(userEmail, otp);
+
         Timer timer = new Timer(userEmail);
 
         TimerTask task = new TimerTask() {

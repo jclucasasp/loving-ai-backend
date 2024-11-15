@@ -50,7 +50,7 @@ public class UserController {
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
             log.debug("No user found for email: [ {} ]", email);
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
         }));
     }
 
@@ -58,7 +58,7 @@ public class UserController {
     ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> {
             log.debug("No users found...");
-            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
     }
 
@@ -93,7 +93,7 @@ public class UserController {
         boolean imageSaved = fileCopier.createFile(imageFile, fileName, gender.toString().toLowerCase());
 
         if (!imageSaved) {
-            return ResponseEntity.internalServerError().build();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         String hashedPassword = encoder.encode(password);
@@ -127,10 +127,10 @@ public class UserController {
     public ResponseEntity<Profile> userLogin(@RequestBody User req) {
 
         if (req.email().isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        User userFound = findUserByEmail(req.email());
+        User userFound = findUser(req.email());
 
         if (!encoder.matches(req.password(), userFound.password()) || userFound.end_date() != null) {
             log.debug("Unauthorised");
@@ -158,12 +158,12 @@ public class UserController {
     public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
 
         if (req.id().isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         User userFound = userRepo.findById(req.id()).orElseThrow(() -> {
             log.error("No user found for id [{}]", req.id());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
@@ -179,23 +179,30 @@ public class UserController {
     @PostMapping(path = "/user/otp")
     public ResponseEntity<HttpStatus> Otp(@RequestBody User req) {
 
-        log.info("Incoming OTP request for [{}]", req.email());
-        if (req.email().isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        log.info("\nIncoming OTP for [{}]", req);
+
+        if (req.email() == null && req.id() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        User userFound = findUserByEmail(req.email());
+        User userFound = null;
+
+        if (req.id() != null ) {
+            userFound = findUser(req.id());
+        }
+
+        if (req.email() != null) {
+            userFound = findUser(req.email());
+        }
 
         if (userFound.end_date() != null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-
+        String message;
         String otp = otpGenerator.generateOTP(6);
-        log.info("OTP [{}] generated for email [{}]", otp, req.email());
+        log.info("OTP [{}] generated for email [{}]", otp, userFound.email());
 
-        otpService.setOtpHashMap(userFound.email(), otp);
-
-        otpService.otpTimer(req.email());
+        otpService.otpTimer(userFound.email(), otp);
 
         final String message1 = "Please use this one time pin: " + otp + " to reset your password on Loving AI. \nPlease note that it will expire in 10 minutes!";
         final String message2 = "Please use this one time pin: " + otp + " to activate your profile on Loving AI. \nPlease note that it will expire in 10 minutes!";
@@ -203,37 +210,37 @@ public class UserController {
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
         HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(),
-                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), Boolean.TRUE.equals(req.active()) ? message1 : message2);
+                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), Boolean.TRUE.equals(userProfile.isVerified()) ? message1 : message2);
 
         return ResponseEntity.status(httpStatusCode).build();
     }
 
-    @PostMapping(path = "/user/activate")
-    public ResponseEntity<HttpStatus> userActivate(@RequestBody NewUser req) {
+    @PostMapping(path = "/user/verify")
+    public ResponseEntity<Profile> userActivate(@RequestBody NewUser req) {
 
-        if (req.email().isBlank() || Objects.requireNonNull(req.otp()).isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        if (req.userId() == null || Objects.requireNonNull(req.otp()).isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        User userFound = findUserByEmail(req.email());
+        User userFound = findUser(req.userId());
 
-        if (!req.otp().equals(otpService.getOtpHasMap(userFound.email()))) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (userFound == null || !req.otp().equals(otpService.getOtpHasMap(userFound.email()))) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
         profileRepo.findFirstAndUpdateVerified(userFound.id(), true);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id()).orElseThrow());
     }
 
     @PostMapping(path = "/user/reset")
     public ResponseEntity<User> ResetPassword(@RequestBody NewUser req) {
 
         if (req.email().isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        User userFound = findUserByEmail(req.email());
+        User userFound = findUser(req.email());
 
         if (!otpService.getOtpHasMap(req.email()).equals(req.otp())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -254,10 +261,13 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-    private User findUserByEmail(String email) {
-        return userRepo.getUserByEmail(email).orElseThrow(() -> {
-            log.error("No user found for email: [{}]", email);
-            return new ResponseStatusException(HttpStatus.NOT_FOUND);
-        });
+    private User findUser(String userId) {
+        if (userId.contains("@")) {
+            log.info("Incoming OTP request for user email: [{}]", userId);
+           return userRepo.getUserByEmail(userId).orElseThrow();
+        } else {
+            log.info("Incoming OTP request for user Id: [{}]", userId);
+            return userRepo.getUserById(userId).orElseThrow();
+        }
     }
 }

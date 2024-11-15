@@ -125,7 +125,7 @@ public class DataBaseService  {
                 if (profile.getName().equals("profiles.females.json")) {
                     log.info("Creating females list...");
                     List<Profile> updatedList = profileList.stream().map(p -> {
-                        if (!p.isAi()) {
+                        if (!p.isVerified() || !p.isAi()) {
                             return new Profile(UUID.randomUUID().toString(),
                                     p.getFirstName(),
                                     p.getLastName(),
@@ -133,7 +133,8 @@ public class DataBaseService  {
                                     p.getEthnicity(),
                                     p.getGender(),
                                     p.getBio(),
-                                    "women/".concat(p.getImageUrl()),
+                                    p.getImageUrl(),
+                                    true,
                                     true,
                                     p.getMyersBriggsPersonalityType());
                         } else {
@@ -146,7 +147,7 @@ public class DataBaseService  {
                 } else {
                     log.info("Creating males list...");
                     List<Profile> updatedList = profileList.stream().map(p -> {
-                        if (!p.isAi()) {
+                        if (!p.isVerified() || !p.isAi()) {
                             return new Profile(UUID.randomUUID().toString(),
                                     p.getFirstName(),
                                     p.getLastName(),
@@ -154,7 +155,8 @@ public class DataBaseService  {
                                     p.getEthnicity(),
                                     p.getGender(),
                                     p.getBio(),
-                                    "men/".concat(p.getImageUrl()),
+                                    p.getImageUrl(),
+                                    true,
                                     true,
                                     p.getMyersBriggsPersonalityType());
                         } else {
