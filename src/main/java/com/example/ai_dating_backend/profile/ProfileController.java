@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Log4j2
-@CrossOrigin(origins = "*")
 @RestController
 public class ProfileController {
 

@@ -11,7 +11,6 @@ import java.util.List;
 
 
 @AllArgsConstructor
-@CrossOrigin(origins = "*")
 @RestController
 public class UserSessionController {
 

@@ -21,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
-@CrossOrigin(origins = "*")
 @Log4j2
 @RestController
 public class UserController {

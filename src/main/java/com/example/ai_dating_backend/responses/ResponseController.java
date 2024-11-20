@@ -17,7 +17,6 @@
 //// https://github.com/KoljaB/LocalAIVoiceChat/blob/main/ai_voicetalk_local.py
 //// this one have automatic voice/speech recognition so you don't have to press a button to record
 //// https://github.com/mezbaul-h/june?tab=readme-ov-file
-//@CrossOrigin(origins = "*")
 //@AllArgsConstructor
 //@Tag(name = "AI Response Controller", description = "AI generated chat reply")
 //@RestController

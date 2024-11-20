@@ -14,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 @Log4j2
-@CrossOrigin(origins = "*")
 @RestController
 @AllArgsConstructor
 public class MatchController {

@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 
 @Log4j2
 @AllArgsConstructor
-@CrossOrigin(origins = "*")
 @RestController
 public class ConversationController {
 

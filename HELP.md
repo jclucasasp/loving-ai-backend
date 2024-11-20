@@ -15,6 +15,7 @@ For further reference, please consider the following sections:
 * [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/reference/index.html)
 * [OpenAI](https://docs.spring.io/spring-ai/reference/index.html)
 * [Docker Compose Support](https://docs.spring.io/spring-boot/docs/3.3.2/reference/htmlsingle/index.html#features.docker-compose)
+* [AWS EC2 Service](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#SecurityGroup:group-id=sg-0b7a5ecd2daadf2a0)
 
 ### Guides
 The following guides illustrate how to use some features concretely:

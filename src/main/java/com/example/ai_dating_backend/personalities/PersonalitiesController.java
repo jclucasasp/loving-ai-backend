@@ -14,7 +14,6 @@ import java.util.List;
 
 @Tag(name = "Myers Briggs personality Controller", description = "This is just to view the different personality types and their descriptions")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 @RestController
 public class PersonalitiesController {
 

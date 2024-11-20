@@ -12,6 +12,9 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 // TODO: Implement the below:
 // https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html
 @Configuration
@@ -39,6 +42,21 @@ public class WebSecurityConfig {
                 })
                 .httpBasic(Customizer.withDefaults())
                 .build();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("https://loving-ai.onrender.com")
+//                        .allowedOrigins("http://0.0.0.0:5173")
+                        .allowCredentials(true)
+                        .allowedMethods("*")
+                        .maxAge(3600);
+            }
+        };
     }
 
     @Bean
