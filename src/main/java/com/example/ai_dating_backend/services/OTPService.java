@@ -22,8 +22,9 @@ public class OTPService {
 
         log.info("OTP Timer started for user: [{}]", userEmail);
 
-        if (otpHashMap.get(userEmail) == null) {
+        if (otpHashMap.get(userEmail) != null) {
             log.info("OTP already exist, doing nothing...");
+            return;
         }
         otpHashMap.putIfAbsent(userEmail, otp);
 

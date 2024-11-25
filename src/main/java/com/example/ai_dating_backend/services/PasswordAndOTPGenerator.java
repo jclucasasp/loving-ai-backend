@@ -40,6 +40,8 @@ public class PasswordAndOTPGenerator {
 
     public String generateOTP(int length) {
 
+        stringBuilder.delete(0, stringBuilder.length());
+
         if (length < 6 ) {
             length = 6;
         }

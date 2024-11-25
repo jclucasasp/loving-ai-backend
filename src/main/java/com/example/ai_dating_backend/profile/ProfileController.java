@@ -73,6 +73,7 @@ public class ProfileController {
         }));
     }
 
+    //TODO: when updating the active
     @PostMapping(path = "/api/profile/update")
     public ResponseEntity<Profile> updateProfile(@RequestBody Profile req) {
 

@@ -184,6 +184,7 @@ public class UserController {
         }
 
         User userFound = null;
+        String otp = null;
 
         if (req.id() != null ) {
             userFound = findUser(req.id());
@@ -196,8 +197,15 @@ public class UserController {
         if (userFound.end_date() != null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        String message;
-        String otp = otpGenerator.generateOTP(6);
+
+        if (otpService.getOtpHasMap(userFound.email()) == null){
+            log.info("\nNo email found for user: [{}]", otpService.getOtpHasMap(userFound.email()));
+            otp = otpGenerator.generateOTP(6);
+        } else {
+            log.info("\nOTP already exist for user: [{}]", otpService.getOtpHasMap(userFound.email()));
+            otp = otpService.getOtpHasMap(userFound.email());
+        }
+
         log.info("OTP [{}] generated for email [{}]", otp, userFound.email());
 
         otpService.otpTimer(userFound.email(), otp);
@@ -251,7 +259,7 @@ public class UserController {
                 userFound.create_date(),
                 userFound.end_date(),
                 new Date(),
-                null
+                userFound.active()
         );
 
         userRepo.save(updatedUser);
