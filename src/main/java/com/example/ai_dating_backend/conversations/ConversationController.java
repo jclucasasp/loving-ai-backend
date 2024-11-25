@@ -24,7 +24,7 @@ public class ConversationController {
     private final ResponseServiceInterface responseService;
     private final MatchRepo matchRepo;
 
-    @GetMapping(path = "/conversation/find-all", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/api/conversation/find-all", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Conversation>> getConversations() {
         return ResponseEntity.ok(Optional.of(conversationRepo.findAll()).orElseThrow(() -> {
             log.debug("No conversations found...");
@@ -33,7 +33,7 @@ public class ConversationController {
     }
 
     // This would have to change if not using AI
-    @PostMapping(path = "/conversation/add/{matchId}")
+    @PostMapping(path = "/api/conversation/add/{matchId}")
     public ResponseEntity<Conversation> addMessage(@PathVariable("matchId") String matchId, @RequestBody Response req) throws ExecutionException, InterruptedException {
 
         // Finding the users current conversation
@@ -85,7 +85,7 @@ public class ConversationController {
         return ResponseEntity.ok(fromConversation);
     }
 
-    @GetMapping(path = "/conversation/find/{matchId}")
+    @GetMapping(path = "/api/conversation/find/{matchId}")
     public ResponseEntity<Optional<Conversation>> getConversationById(@PathVariable("matchId") String matchId) {
 
         return ResponseEntity.ok(Optional.of(conversationRepo.getByMatchId(matchId).orElseThrow(() -> {
@@ -94,7 +94,7 @@ public class ConversationController {
         })));
     }
 
-    @PostMapping(path = "/conversation/from-to")
+    @PostMapping(path = "/api/conversation/from-to")
     public ResponseEntity<Optional<Conversation>> getConversationFromTo(@RequestBody Match req) {
         log.debug("Incoming match: [ {} ]", req);
         Match match = matchRepo.findByFromTo(req.profileId(), req.toProfileId())
@@ -113,7 +113,7 @@ public class ConversationController {
         return ResponseEntity.ok(Optional.of(conversation));
     }
 
-    @DeleteMapping(path = "/conversation/del", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(path = "/api/conversation/del", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> delConversations() {
         try {
             conversationRepo.deleteAll();

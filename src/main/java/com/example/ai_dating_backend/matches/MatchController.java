@@ -22,7 +22,7 @@ public class MatchController {
     private final ConversationRepo conversationRepo;
     private final ProfileRepo profileRepo;
 
-    @PostMapping(path = "/match/create")
+    @PostMapping(path = "/api/match/create")
     public ResponseEntity<Match> createMatch(@RequestBody Match req) {
 
         if (!profileRepo.existsProfileByUserId(req.profileId())) {
@@ -51,7 +51,7 @@ public class MatchController {
         return ResponseEntity.ok(matchFrom);
     }
 
-    @PostMapping(path = "/matches/all")
+    @PostMapping(path = "/api/matches/all")
     public ResponseEntity<List<Match>> findAll(@RequestBody Profile req) {
         List<Match> matchList = matchRepo.findAllProfileId(req.getUserId())
         .orElseThrow(() -> {
@@ -62,7 +62,7 @@ public class MatchController {
         return ResponseEntity.ok(matchList);
     }
 
-    @PostMapping(path = "/match/profiles")
+    @PostMapping(path = "/api/match/profiles")
     public ResponseEntity<List<Optional<Profile>>> getAllProfilesById(@RequestBody Match[] req) {
         List<Optional<Profile>> profilesById = new ArrayList<>();
 
@@ -78,7 +78,7 @@ public class MatchController {
         return ResponseEntity.ok(profilesById);
     }
 
-    @DeleteMapping(path = "/match/delete-by-id")
+    @DeleteMapping(path = "/api/match/delete-by-id")
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
         Match matchFound = matchRepo.findByProfileId(profile.getUserId())
                 .orElseThrow(() -> {
@@ -94,7 +94,7 @@ public class MatchController {
         return ResponseEntity.ok("Match id: " + profile.getUserId() + " deleted");
     }
 
-    @DeleteMapping(path = "/matches/delete-all")
+    @DeleteMapping(path = "/api/matches/delete-all")
     public ResponseEntity<String> delAllMessages() {
         matchRepo.deleteAll();
         log.debug("All matches deleted...");

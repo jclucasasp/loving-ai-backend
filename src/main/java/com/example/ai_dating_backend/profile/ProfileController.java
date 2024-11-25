@@ -19,7 +19,7 @@ public class ProfileController {
         this.profileRepo = profileRepo;
     }
 
-    @GetMapping("/profile/all")
+    @GetMapping(path = "/api/profile/all")
     public ResponseEntity<List<Profile>> getAllProfiles() {
         return ResponseEntity.ok(Optional.of(profileRepo.findAll()).orElseThrow(() -> {
             log.error("No profiles found...");
@@ -27,13 +27,13 @@ public class ProfileController {
         }));
     }
 
-    @PostMapping(value = "/profile/id")
+    @PostMapping(path = "/api/profile/id")
     public ResponseEntity<Profile> getProfileById(@RequestBody Profile profile) {
         return ResponseEntity.ok(profileRepo.findById(profile.userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
     }
 
-    @DeleteMapping(path = "/profile/id")
+    @DeleteMapping(path = "/api/profile/id")
     public ResponseEntity<String> deleteProfileById(@RequestBody Profile profile) {
 
         if (!profileRepo.existsById(profile.userId)) {
@@ -43,7 +43,7 @@ public class ProfileController {
         return ResponseEntity.ok("User deleted");
     }
 
-    @PostMapping("/profile/name")
+    @PostMapping(path = "/api/profile/name")
     public ResponseEntity<Profile> getProfileByName(@RequestBody() Profile req) {
 
         if (req == null || req.firstName.isBlank()) {
@@ -59,7 +59,7 @@ public class ProfileController {
         );
     }
 
-    @PostMapping(path = "/profile/random")
+    @PostMapping(path = "/api/profile/random")
     public ResponseEntity<Profile> getRandomProfile(@RequestBody Profile req) {
 
         if (req.gender.equals(Gender.MALE)) {
@@ -73,7 +73,7 @@ public class ProfileController {
         }));
     }
 
-    @PostMapping("/profile/update")
+    @PostMapping(path = "/api/profile/update")
     public ResponseEntity<Profile> updateProfile(@RequestBody Profile req) {
 
         System.out.println(req);

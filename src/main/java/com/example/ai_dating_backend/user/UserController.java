@@ -45,7 +45,7 @@ public class UserController {
         this.otpService = new OTPService();
     }
 
-    @GetMapping(path = "/user/{email}", params = "email")
+    @GetMapping(path = "/api/user/{email}", params = "email")
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
             log.debug("No user found for email: [ {} ]", email);
@@ -53,7 +53,7 @@ public class UserController {
         }));
     }
 
-    @GetMapping(path = "/user/all")
+    @GetMapping(path = "/api/user/all")
     ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> {
             log.debug("No users found...");
@@ -63,8 +63,7 @@ public class UserController {
 
     //TODO: Set the date offset.
     // https://reflectoring.io/spring-timezones/
-    //TODO: Create a welcome email for and otp for verification
-    @PostMapping(path = "/user/create")
+    @PostMapping(path = "/api/user/create")
     ResponseEntity<String> createNewUser(
             @RequestParam("firstName") String firstName,
             @RequestParam("lastName") String lastName,
@@ -116,13 +115,13 @@ public class UserController {
         return ResponseEntity.ok("User " + firstName + " " + lastName + " created");
     }
 
-    @DeleteMapping(path = "/user/delete")
+    @DeleteMapping(path = "/api/user/delete")
     ResponseEntity<String> deleteAllUsers() {
         userRepo.deleteAll();
         return ResponseEntity.ok("All users deleted");
     }
 
-    @PostMapping("/user/login")
+    @PostMapping("/api/user/login")
     public ResponseEntity<Profile> userLogin(@RequestBody User req) {
 
         if (req.email().isBlank()) {
@@ -153,7 +152,7 @@ public class UserController {
         );
     }
 
-    @PostMapping(path = "/user/logout")
+    @PostMapping(path = "/api/user/logout")
     public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
 
         if (req.id().isBlank()) {
@@ -175,7 +174,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @PostMapping(path = "/user/otp")
+    @PostMapping(path = "/api/user/otp")
     public ResponseEntity<HttpStatus> Otp(@RequestBody User req) {
 
         log.info("\nIncoming OTP for [{}]", req);
@@ -204,7 +203,7 @@ public class UserController {
         otpService.otpTimer(userFound.email(), otp);
 
         final String message1 = "Please use this one time pin: " + otp + " to reset your password on Loving AI. \nPlease note that it will expire in 10 minutes!";
-        final String message2 = "Please use this one time pin: " + otp + " to activate your profile on Loving AI. \nPlease note that it will expire in 10 minutes!";
+        final String message2 = "Welcome and thank you for choosing Loving AI. We hope that you enjoy the experience and we are always open to your feedback. \nPlease use this one time pin: " + otp + " to activate your profile on Loving AI. \nPlease note that it will expire in 10 minutes!";
 
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
@@ -214,7 +213,7 @@ public class UserController {
         return ResponseEntity.status(httpStatusCode).build();
     }
 
-    @PostMapping(path = "/user/verify")
+    @PostMapping(path = "/api/user/verify")
     public ResponseEntity<Profile> userActivate(@RequestBody NewUser req) {
 
         if (req.userId() == null || Objects.requireNonNull(req.otp()).isBlank()) {
@@ -232,7 +231,7 @@ public class UserController {
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id()).orElseThrow());
     }
 
-    @PostMapping(path = "/user/reset")
+    @PostMapping(path = "/api/user/reset")
     public ResponseEntity<User> ResetPassword(@RequestBody NewUser req) {
 
         if (req.email().isBlank()) {
