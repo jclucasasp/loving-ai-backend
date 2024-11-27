@@ -1,7 +1,6 @@
 package ai.memory.ai.chat.memory;
 
 import ai.memory.ai.chat.memory.services.DataBaseService;
-import ai.memory.ai.chat.memory.services.SystemPromptFileReader;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
