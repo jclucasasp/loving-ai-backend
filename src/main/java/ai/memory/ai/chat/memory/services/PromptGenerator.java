@@ -1,12 +1,16 @@
 package ai.memory.ai.chat.memory.services;
 
 import ai.memory.ai.chat.memory.responses.Response;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Service
 public class PromptGenerator {
+
+    private final SystemPromptFileReader reader;
 
     public Map<String, String> generatedChatPrompt(Response res) {
         StringBuilder extraConfigBuilder = new StringBuilder();
@@ -17,7 +21,13 @@ public class PromptGenerator {
         String bio = res.bio();
         String personalityType = res.personality();
 
-        extraConfigBuilder.append("Your Persona: ").append(age).append("-year-old single ")
+        String DEFAULT_SYSTEM = reader.readJsonFile();
+        if (DEFAULT_SYSTEM == null){
+            DEFAULT_SYSTEM = "";
+        }
+
+        extraConfigBuilder.append(DEFAULT_SYSTEM)
+                .append("Your Persona: ").append(age).append("-year-old single ")
                 .append(ethnicity).append(" ").append(gender)
                 .append(", called ").append(name)
                 .append(".\nYour bio is: ").append(bio).append(".")

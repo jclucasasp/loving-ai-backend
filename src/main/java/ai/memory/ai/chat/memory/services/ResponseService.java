@@ -1,5 +1,6 @@
 package ai.memory.ai.chat.memory.services;
 
+import ai.memory.ai.chat.memory.config.ChatClientConfig;
 import ai.memory.ai.chat.memory.services.interfaces.ResponseServiceInterface;
 import ai.memory.ai.chat.memory.responses.Response;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class ResponseService implements ResponseServiceInterface {
 
     private final ThreadPoolTaskExecutor chatResponseExecutor;
     private final PromptGenerator promptGenerator;
+    private final ChatClientConfig clientConfig;
     private final ChatClient chatClient;
 
     private Map<String, String> prompt = new ConcurrentHashMap<>();
@@ -44,8 +46,6 @@ public class ResponseService implements ResponseServiceInterface {
             log.info("\nGenerating chat response for user [{}] on thread {}", res.name(), Thread.currentThread().getName());
 
             try {
-                log.info("Generating prompt with prompt: {} ", prompt);
-                SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(prompt.get("system"));
                 return chatClient
                         .prompt()
                         .system(prompt.get("system"))

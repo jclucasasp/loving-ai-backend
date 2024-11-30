@@ -286,13 +286,13 @@ public class UserController {
 
     private User findUser(String userId) {
         if (userId.contains("@")) {
-            log.info("Incoming OTP request for user email: [{}]", userId);
+            log.info("Incoming request for user email: [{}]", userId);
            return userRepo.getUserByEmail(userId).orElseThrow(() -> {
                log.error("No user returned for email: [{}]", userId);
                return new ResponseStatusException(HttpStatus.NOT_FOUND);
            });
         } else {
-            log.info("Incoming OTP request for user Id: [{}]", userId);
+            log.info("Incoming request for user Id: [{}]", userId);
             return userRepo.getUserById(userId).orElseThrow(() -> {
                 log.error("No user returned for userId: [{}]", userId);
                 return new ResponseStatusException(HttpStatus.NOT_FOUND);

@@ -51,7 +51,7 @@ public class WebSecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://loving-ai.com", "http://localhost:5173", "http://192.168.0.3:5173/", "http://172.18.0.1:5173/")
+                        .allowedOrigins("https://loving-ai.com", "https://www.loving-ai.com", "http://localhost:5173", "http://192.168.0.3:5173/", "http://172.18.0.1:5173/")
                         .allowCredentials(true)
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .maxAge(3600);

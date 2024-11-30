@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChatClientConfig {
 
-    private final SystemPromptFileReader reader;
-
     @Bean
     public ChatMemory chatMemory() {
         return new InMemoryChatMemory();
@@ -21,9 +19,6 @@ public class ChatClientConfig {
 
     @Bean
     ChatClient chatClient(ChatClient.Builder builder) {
-        final String DEFAULT_SYSTEM = reader.readJsonFile();
-        return builder
-                .defaultSystem( DEFAULT_SYSTEM + "{extraConfig}")
-                .build();
+        return builder.build();
     }
 }
