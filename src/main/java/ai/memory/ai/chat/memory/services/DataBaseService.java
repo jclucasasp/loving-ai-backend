@@ -206,7 +206,11 @@ public class DataBaseService {
 
         try {
             for (File profile: profiles) {
+                if (profile.getName().endsWith(".txt")) {
+                    continue;
+                }
 
+                log.info("Processing file: [{}]", profile.getName());
                 List<Profile> profileList = gson.fromJson(new FileReader(profile), new TypeToken<List<Profile>>() {
                 }.getType());
                 log.info("Profile list created from file, attempting to save Profiles to database...");
