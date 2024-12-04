@@ -118,6 +118,10 @@ public class DataBaseService {
             log.info("Attempting to read json files and create a list of profiles...");
 
             for (File profile : profiles) {
+
+                if (profile.getName().endsWith(".txt")) {
+                    continue;
+                }
                 List<Profile> profileList = gson.fromJson(new FileReader(profile), new TypeToken<List<Profile>>() {
                 }.getType());
                 log.info("Profile list created from file, attempting to update Profiles...");
