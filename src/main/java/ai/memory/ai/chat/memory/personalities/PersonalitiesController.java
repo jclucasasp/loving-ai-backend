@@ -2,6 +2,8 @@ package ai.memory.ai.chat.memory.personalities;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,16 +20,19 @@ public class PersonalitiesController {
 
     private final PersonalityTypesRepo typesRepo;
     private final PersonalityDescriptionRepo descriptionRepo;
+    HttpHeaders headers = new HttpHeaders();
 
     @GetMapping("/api/personality/types")
     public ResponseEntity<List<PersonalitiesTypes>> GetAllPersonalityTypes() {
         List<PersonalitiesTypes> personalitiesTypes = typesRepo.findAll();
-        return ResponseEntity.ofNullable(personalitiesTypes);
+        headers.setCacheControl("public, max-age=2592000");
+        return new ResponseEntity<>(personalitiesTypes, headers, HttpStatus.OK);
     }
 
     @GetMapping(path = "/api/personality/descriptions")
     public ResponseEntity<List<PersonalityDescription>> GetAllPersonalityDescriptions() {
         List<PersonalityDescription> personalityDescriptions = descriptionRepo.findAll();
-        return ResponseEntity.ofNullable(personalityDescriptions);
+        headers.setCacheControl("public, max-age=2592000");
+        return new ResponseEntity<>(personalityDescriptions, headers, HttpStatus.OK);
     }
 }

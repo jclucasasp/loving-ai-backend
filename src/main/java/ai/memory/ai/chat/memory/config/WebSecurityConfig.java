@@ -36,12 +36,15 @@ public class WebSecurityConfig {
                     requests.requestMatchers(
                             "/images/**",
                             "/v3/api-docs**",
-                            "/swagger**"
+                            "/swagger**",
+                            "/api/personality/types",
+                            "/api/personality/descriptions"
                     ).permitAll();
                     requests.anyRequest().authenticated();
                 })
                 .cors(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
+                .headers(headers -> headers.cacheControl(Customizer.withDefaults()))
                 .build();
     }
 
