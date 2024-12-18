@@ -33,6 +33,16 @@ public class ConversationController {
     }
 
     // This would have to change if not using AI
+    // Response = {
+    //        messagePrompt: message,
+    //        userId: loggedInUser?.userId,
+    //        name: toProfile?.firstName + " " + toProfile?.lastName,
+    //        age: toProfile?.age || 0,
+    //        ethnicity: toProfile?.ethnicity || "",
+    //        gender: toProfile?.gender || "",
+    //        bio: toProfile?.bio || "",
+    //        personality: toProfile?.myersBriggsPersonalityType || "",
+    //      }
     @PostMapping(path = "/api/conversation/add/{matchId}")
     public ResponseEntity<Conversation> addMessage(@PathVariable("matchId") String matchId, @RequestBody Response res) throws ExecutionException, InterruptedException {
 

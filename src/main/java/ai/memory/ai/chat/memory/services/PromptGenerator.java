@@ -44,7 +44,7 @@ public class PromptGenerator {
                 .append("\nYou would be chatting with the opposite of your gender.")
                 .append("\nThe person you are talking to is called ").append(userProfile.getFirstName().concat(" ").concat(userProfile.getLastName()))
                 .append("\nTheir bio is ").append(userProfile.getBio())
-                .append("\nTheir personality type is " + personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()))
+                .append("\nTheir personality type is " + personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()).get().description())
                 .append("\nIt is okay for you to go off script every now and again.");
 
         String extraConfig = extraConfigBuilder.toString();

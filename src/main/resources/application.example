@@ -2,6 +2,8 @@ spring.application.name=
 server.port=8080
 
 spring.data.mongodb.uri=mongodb://<username>:<password>@localhost:27017/ai_dating?authSource=admin
+spring.data.redis.host=
+spring.data.redis.port=
 
 logging.level.root=
 logging.level.sql=

@@ -10,9 +10,9 @@
     </parent>
     <groupId>ai.memory</groupId>
     <artifactId>ai.chat.memory</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>ai.chat.memory</name>
-    <description>Demo project for Spring Boot</description>
+    <version>1.2-SNAPSHOT</version>
+    <name>loving_AI_backend</name>
+    <description>Backend for loving-ai</description>
     <url/>
     <licenses>
         <license/>
@@ -42,6 +42,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
