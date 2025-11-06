@@ -222,22 +222,22 @@ public class DataBaseService {
                 profileRepo.saveAll(profileList);
                 log.info("Profiles saved...");
 
-                log.info("Attempting to create Users from Profiles...");
-                List<User> userList = new ArrayList<>();
-                profileList.forEach(p -> userList.add(
-                        new User(
-                                p.getUserId(),
-                                p.getFirstName().toLowerCase().concat(p.getLastName().toLowerCase()).concat("@noemail.com"),
-                                passwordEncoder.encode("1Ms#&qRL"),
-                                new Date(),
-                                null,
-                                null,
-                                null
-                        ))
-                );
-                log.info("Users created from, attempting to save to database...");
-                userRepo.saveAll(userList);
-                log.info("Users saved to database...");
+//                log.info("Attempting to create Users from Profiles...");
+//                List<User> userList = new ArrayList<>();
+//                profileList.forEach(p -> userList.add(
+//                        new User(
+//                                p.getUserId(),
+//                                p.getFirstName().toLowerCase().concat(p.getLastName().toLowerCase()).concat("@noemail.com"),
+//                                passwordEncoder.encode("1Ms#&qRL"),
+//                                new Date(),
+//                                null,
+//                                null,
+//                                null
+//                        ))
+//                );
+//                log.info("Users created from, attempting to save to database...");
+//                userRepo.saveAll(userList);
+//                log.info("Users saved to database...");
             }
 
         } catch (Exception e) {

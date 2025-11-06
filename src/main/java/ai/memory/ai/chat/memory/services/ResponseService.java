@@ -1,21 +1,23 @@
 package ai.memory.ai.chat.memory.services;
 
+import ai.memory.ai.chat.memory.conversations.ChatMessage;
+import ai.memory.ai.chat.memory.conversations.Conversation;
+import ai.memory.ai.chat.memory.conversations.ConversationRepo;
 import ai.memory.ai.chat.memory.services.interfaces.ResponseServiceInterface;
 import ai.memory.ai.chat.memory.responses.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,33 +28,75 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ResponseService implements ResponseServiceInterface {
 
     private final ThreadPoolTaskExecutor chatResponseExecutor;
-    private final RedisTemplate<String, ConcurrentHashMap<String,List<Message>>> redisTemplate;
     private final PromptGenerator promptGenerator;
+    private final ConversationRepo conversationRepo;
+    private final SummarizationService summarizationService;
     private final ChatClient chatClient;
 
+    private final static int MAX_MESSAGES = 20;
+
     private Map<String, String> prompt = new ConcurrentHashMap<>();
-//    private final Map<String, ChatMemory> userChatMemories = new ConcurrentHashMap<>();
 
     @Async("chatResponseExecutor")
     @Override
-    // to implement streaming, just change to CompletableFuture<Flux><String>>
-    // Response = {
-    //        messagePrompt: message,
-    //        userId: loggedInUser?.userId,
-    //        name: toProfile?.firstName + " " + toProfile?.lastName,
-    //        age: toProfile?.age || 0,
-    //        ethnicity: toProfile?.ethnicity || "",
-    //        gender: toProfile?.gender || "",
-    //        bio: toProfile?.bio || "",
-    //        personality: toProfile?.myersBriggsPersonalityType || "",
-    //      }
+
     public CompletableFuture<String> generateChatResponse(Response res, String matchId) {
-        final CustomChatMemoryStore customChatMemoryStore = new CustomChatMemoryStore(matchId, redisTemplate);
 
         return CompletableFuture.supplyAsync(() -> {
+
             prompt = promptGenerator.generatedChatPrompt(res);
 
-//            ChatMemory chatMemory = getUserSpecificMemory(matchId);
+            SystemMessage systemMessage = new SystemMessage(prompt.get("system"));
+
+            log.info("\nSystem message: [ {} ]", systemMessage);
+            log.info("\nUser message [ {} ]", prompt.get("user"));
+
+            // 1. Build system prompt
+            Conversation conversation = conversationRepo.getByMatchId(matchId)
+                            .orElseGet(() -> new Conversation(matchId, new ArrayList<>()));
+
+            log.info("\nConversation: [ {} ]", conversation);
+
+            // 2. Load full conversation
+            List<ChatMessage> allMessages = new ArrayList<>(conversation.messages());
+
+            allMessages.sort(Comparator.comparing(ChatMessage::sendDate));
+
+            // 3. Split: recent + older
+            int total = allMessages.size();
+            int recentStart = Math.max(0, total - MAX_MESSAGES);
+            List<ChatMessage> recent = allMessages.subList(recentStart, total);
+            log.info("\nRecent Messages: [ {} ]",recent);
+            List<ChatMessage> older = allMessages.subList(0, recentStart);
+            log.info("\nOlder Messages: [ {} ]",older);
+
+            // 4. Build message list for LLM
+            List<Message> messages = new ArrayList<>();
+
+            // Optional: Add summary of older messages
+            if(!older.isEmpty()) {
+                log.info("\nOlder messages found, summarizing...");
+                String olderText = summarizationService.formatMessagesForSummary(older, res.userId());
+                log.info("\nOlder Messages as test [ {} ]", olderText);
+                String summary = summarizationService.summarizeOlderMessages(olderText);
+                log.info("\nOlder Messages Summary [ {} ]", summary);
+                messages.add(new SystemMessage("Conversation summary so far: " + summary));
+            }
+
+            // Add recent messages in order
+            for (ChatMessage chatMessage : recent) {
+                log.info("\nChat message found: [ {} ]", chatMessage);
+                if (chatMessage.isUserMessage(res.userId())) {
+                    messages.add(new UserMessage(chatMessage.content()));
+                } else {
+                    log.info("Assistant message found for user id: [{}] ", res.userId());
+                    messages.add(new AssistantMessage(chatMessage.content()));
+                }
+            }
+
+            // Add current user message
+            messages.add(new UserMessage(res.messagePrompt()));
+            log.info("\nCurrent message added: [ {} ]", res.messagePrompt());
 
             log.info("\nGenerating chat response for user [{}] on thread {}", res.name(), Thread.currentThread().getName());
             try {
@@ -60,7 +104,7 @@ public class ResponseService implements ResponseServiceInterface {
                         .prompt()
                         .system(prompt.get("system"))
                         .user(prompt.get("user"))
-                        .advisors(new MessageChatMemoryAdvisor(customChatMemoryStore))
+                        .messages(messages)
                         .call()
                         .content();
 
@@ -69,21 +113,4 @@ public class ResponseService implements ResponseServiceInterface {
             }
         }, chatResponseExecutor);
     }
-
-//    @Override
-//    public void setChatMemory(String chatId, ChatMemory chatMemory) {
-//        userChatMemories.put(chatId, chatMemory);
-//    }
-//
-//    @Override
-//    public ChatMemory getChatMemory(String chatId) {
-//        return userChatMemories.getOrDefault(chatId, new CustomChatMemoryStore(chatId));
-//    }
-//
-//    @Override
-//    public ChatMemory getUserSpecificMemory(String chatId) {
-//        ChatMemory chatMemory = getChatMemory(chatId);
-//        setChatMemory(chatId, chatMemory);
-//        return chatMemory;
-//    }
 }

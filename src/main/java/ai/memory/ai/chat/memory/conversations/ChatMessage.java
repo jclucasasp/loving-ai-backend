@@ -16,6 +16,9 @@ public record ChatMessage(
         String receiverProfileId,
         @Indexed(name = "ChatMessage-createDate-idx")
         Date sendDate,
-        String messageText
+        String content
 ) {
+    public boolean isUserMessage(String currentUserProfileId) {
+        return  senderProfileId.equals(currentUserProfileId);
+    }
 }

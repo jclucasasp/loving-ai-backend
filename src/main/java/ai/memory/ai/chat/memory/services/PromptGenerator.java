@@ -1,14 +1,17 @@
 package ai.memory.ai.chat.memory.services;
 
+import ai.memory.ai.chat.memory.personalities.PersonalityDescription;
 import ai.memory.ai.chat.memory.personalities.PersonalityDescriptionRepo;
 import ai.memory.ai.chat.memory.profile.Profile;
 import ai.memory.ai.chat.memory.profile.ProfileRepo;
 import ai.memory.ai.chat.memory.responses.Response;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PromptGenerator {
@@ -32,7 +35,8 @@ public class PromptGenerator {
         }
 
         Profile userProfile = profileRepo.getProfileByUserId(res.userId()).orElseThrow();
-
+        //TODO: this is not return any data
+//        log.info("Personality [ {} ]", personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()).get().description());
         extraConfigBuilder.append(DEFAULT_SYSTEM)
                 .append("Your Persona: ").append(age).append("-year-old single ")
                 .append(ethnicity).append(" ").append(gender)
@@ -43,8 +47,8 @@ public class PromptGenerator {
                 .append("\nYou do have a profile picture on this dating site.")
                 .append("\nYou would be chatting with the opposite of your gender.")
                 .append("\nThe person you are talking to is called ").append(userProfile.getFirstName().concat(" ").concat(userProfile.getLastName()))
-                .append("\nTheir bio is ").append(userProfile.getBio())
-                .append("\nTheir personality type is " + personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()).get().description())
+                .append("\nTheir bio is ").append(userProfile.getBio()).append("\nTheir personality type is ")
+                .append(userProfile.getMyersBriggsPersonalityType())
                 .append("\nIt is okay for you to go off script every now and again.");
 
         String extraConfig = extraConfigBuilder.toString();
