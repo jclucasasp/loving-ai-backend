@@ -35,8 +35,6 @@ public class PromptGenerator {
         }
 
         Profile userProfile = profileRepo.getProfileByUserId(res.userId()).orElseThrow();
-        var personalityDescription = personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType());
-        log.info("\nPersonality [ {} ]\n", personalityDescription);
         extraConfigBuilder.append(DEFAULT_SYSTEM)
                 .append("Your Persona: ").append(age).append("-year-old single ")
                 .append(ethnicity).append(" ").append(gender)
@@ -47,7 +45,7 @@ public class PromptGenerator {
                 .append("\nYou do have a profile picture on this dating site.")
                 .append("\nYou would be chatting with the opposite of your gender.")
                 .append("\nThe person you are talking to is called ").append(userProfile.getFirstName().concat(" ").concat(userProfile.getLastName()))
-                .append("\nTheir bio is ").append(userProfile.getBio()).append("\nTheir personality type is ").append(personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()))
+                .append("\nTheir personality type is ").append(personalityDescriptionRepo.findById(userProfile.getMyersBriggsPersonalityType()))
                 .append("\nIt is okay for you to go off script every now and again.");
 
         String extraConfig = extraConfigBuilder.toString();

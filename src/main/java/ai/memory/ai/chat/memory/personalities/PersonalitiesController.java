@@ -2,6 +2,7 @@ package ai.memory.ai.chat.memory.personalities;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,7 @@ import java.util.List;
 
 // This website you can learn more about the personalities and take a personality test
 // https://www.16personalities.com/free-personality-test
-
+@Log4j2
 @Tag(name = "Myers Briggs personality Controller", description = "This is just to view the different personality types and their descriptions")
 @RequiredArgsConstructor
 @RestController
