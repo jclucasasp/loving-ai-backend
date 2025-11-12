@@ -1,0 +1,43 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_DATABASE: ai_dating
+
+  app:
+    image: jclucasasp/loving-ai:latest
+    container_name: loving-ai
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: /home/jc/IdeaProjects/loving-ai/images
+        target: /app/images
+
+      - type: bind
+        source: /home/jc/IdeaProjects/loving-ai/profiles
+        target: /app/profiles
+
+      - type: bind
+        source: /home/jc/IdeaProjects/loving-ai/logs
+        target: /logs
+
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://root:secret@mongo:27017/ai_dating?authSource=admin
+      LOGGING_FILE_NAME: /logs/app.log
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: INFO
+
+volumes:
+  mongo-data:
