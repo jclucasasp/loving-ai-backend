@@ -48,14 +48,14 @@ public class ResponseService implements ResponseServiceInterface {
 
             SystemMessage systemMessage = new SystemMessage(prompt.get("system"));
 
-            log.info("\nSystem message: [ {} ]", systemMessage);
-            log.info("\nUser message [ {} ]", prompt.get("user"));
+            log.debug("\nSystem message: [ {} ]", systemMessage);
+            log.debug("\nUser message [ {} ]", prompt.get("user"));
 
             // 1. Build system prompt
             Conversation conversation = conversationRepo.getByMatchId(matchId)
                             .orElseGet(() -> new Conversation(matchId, new ArrayList<>()));
 
-            log.info("\nConversation: [ {} ]", conversation);
+            log.debug("\nConversation: [ {} ]", conversation);
 
             // 2. Load full conversation
             List<ChatMessage> allMessages = new ArrayList<>(conversation.messages());
@@ -66,37 +66,37 @@ public class ResponseService implements ResponseServiceInterface {
             int total = allMessages.size();
             int recentStart = Math.max(0, total - MAX_MESSAGES);
             List<ChatMessage> recent = allMessages.subList(recentStart, total);
-            log.info("\nRecent Messages: [ {} ]",recent);
+            log.debug("\nRecent Messages: [ {} ]",recent);
             List<ChatMessage> older = allMessages.subList(0, recentStart);
-            log.info("\nOlder Messages: [ {} ]",older);
+            log.debug("\nOlder Messages: [ {} ]",older);
 
             // 4. Build message list for LLM
             List<Message> messages = new ArrayList<>();
 
             // Optional: Add summary of older messages
             if(!older.isEmpty()) {
-                log.info("\nOlder messages found, summarizing...");
+                log.debug("\nOlder messages found, summarizing...");
                 String olderText = summarizationService.formatMessagesForSummary(older, res.userId());
-                log.info("\nOlder Messages as test [ {} ]", olderText);
+                log.debug("\nOlder Messages as test [ {} ]", olderText);
                 String summary = summarizationService.summarizeOlderMessages(olderText);
-                log.info("\nOlder Messages Summary [ {} ]", summary);
+                log.debug("\nOlder Messages Summary [ {} ]", summary);
                 messages.add(new SystemMessage("Conversation summary so far: " + summary));
             }
 
             // Add recent messages in order
             for (ChatMessage chatMessage : recent) {
-                log.info("\nChat message found: [ {} ]", chatMessage);
+                log.debug("\nChat message found: [ {} ]", chatMessage);
                 if (chatMessage.isUserMessage(res.userId())) {
                     messages.add(new UserMessage(chatMessage.content()));
                 } else {
-                    log.info("Assistant message found for user id: [{}] ", res.userId());
+                    log.debug("Assistant message found for user id: [{}] ", res.userId());
                     messages.add(new AssistantMessage(chatMessage.content()));
                 }
             }
 
             // Add current user message
             messages.add(new UserMessage(res.messagePrompt()));
-            log.info("\nCurrent message added: [ {} ]", res.messagePrompt());
+            log.debug("\nCurrent message added: [ {} ]", res.messagePrompt());
 
             log.info("\nGenerating chat response for user [{}] on thread {}", res.name(), Thread.currentThread().getName());
             try {

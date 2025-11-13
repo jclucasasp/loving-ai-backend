@@ -210,7 +210,7 @@ public class DataBaseService {
 
         try {
             for (File profile: profiles) {
-                if (profile.getName().endsWith(".txt")) {
+                if (!profile.getName().endsWith(".json")) {
                     continue;
                 }
 

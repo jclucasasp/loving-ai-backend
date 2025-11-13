@@ -83,15 +83,19 @@ public class MatchController {
     @DeleteMapping(path = "/api/match/delete-by-id")
     public ResponseEntity<String> delMatchById(@RequestBody Profile profile) {
         Match matchFound = matchRepo.findByProfileId(profile.getUserId()).orElseThrow(() -> {
-            log.error("Unable to find match for profile id: [ {} ]", profile.getUserId());
+            log.error("Unable to find match for profile id: [{}]", profile.getUserId());
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
+
         try {
             matchRepo.deleteById(matchFound.id());
         } catch (Exception e) {
             log.error("Unable to delete profile id: [ {} ]", profile.getUserId());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete profile id: " + profile.getUserId(), e);
         }
+
+        log.info("UserId: [{}] deleted matched profileId: [{}]",profile.getUserId(), matchFound.profileId());
+
         return ResponseEntity.ok("Match id: " + profile.getUserId() + " deleted");
     }
 

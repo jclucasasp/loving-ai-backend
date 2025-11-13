@@ -27,7 +27,7 @@ public class ConversationController {
     @GetMapping(path = "/api/conversation/find-all", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Conversation>> getConversations() {
         return ResponseEntity.ok(Optional.of(conversationRepo.findAll()).orElseThrow(() -> {
-            log.debug("No conversations found...");
+            log.error("No conversations found...");
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "No conversations found");
         }));
     }
@@ -38,7 +38,7 @@ public class ConversationController {
         // Finding the users current conversation
         Conversation fromConversation = conversationRepo.getByMatchId(matchId)
                 .orElseThrow(() -> {
-                    log.debug("Unable to find conversation by id: [ {} ]", matchId);
+                    log.error("Unable to find conversation by id: [ {} ]", matchId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find conversation by id");
                 });
 
@@ -46,7 +46,7 @@ public class ConversationController {
 
         // Find the users current match
         Match matchFrom = matchRepo.findById(matchId).orElseThrow(() -> {
-            log.debug("Unable to find match for conversation id: [ {} ]", matchId);
+            log.error("Unable to find match for conversation id: [ {} ]", matchId);
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
@@ -58,13 +58,13 @@ public class ConversationController {
             return new ResponseStatusException(HttpStatus.NOT_FOUND);
         });
 
-        log.debug("Found match: [ {} ]", matchTo);
-        log.debug("Recipient match id: [ {} ]", matchTo.id());
+        log.debug("Found match: [{}]", matchTo);
+        log.debug("Recipient match id: [{}]", matchTo.id());
 
         // generate a response from the Ai
         String conversationResponse = responseService.generateChatResponse(res, matchId).get();
 
-        log.info("Generated response from AI: [ {} ]", conversationResponse);
+        log.debug("Generated response from AI: [{}]", conversationResponse);
 
         // saving the current conversation on the user side
         fromConversation.messages()
@@ -72,7 +72,11 @@ public class ConversationController {
                         new ChatMessage(UUID.randomUUID().toString(), matchFrom.profileId(), matchFrom.toProfileId(), new Date(), res.messagePrompt()),
                         new ChatMessage(UUID.randomUUID().toString(), matchFrom.toProfileId(), matchFrom.profileId(), new Date(), conversationResponse)
                 ));
-        conversationRepo.save(fromConversation);
+
+        Conversation savedConversation = conversationRepo.save(fromConversation);
+        if ( savedConversation.messages().isEmpty()) {
+            log.error("No messages found in conversation for matchId: [{}]", matchId);
+        }
 
         return ResponseEntity.ok(fromConversation);
     }
@@ -91,14 +95,14 @@ public class ConversationController {
         log.debug("Incoming match: [ {} ]", req);
         Match match = matchRepo.findByFromTo(req.profileId(), req.toProfileId())
                 .orElseThrow(() -> {
-                    log.debug("Unable to find conversation for match: \n{}", req);
+                    log.error("Unable to find conversation for match: \n{}", req);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         log.debug("Match found: [ {} ]", match);
 
         Conversation conversation = conversationRepo.getByMatchId(match.id())
                 .orElseThrow(() -> {
-                    log.debug("Unable to find conversation with id: [ {} ]", match.id());
+                    log.error("Unable to find conversation with id: [ {} ]", match.id());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 });
         log.debug("Conversation found: [ {} ]", conversation);

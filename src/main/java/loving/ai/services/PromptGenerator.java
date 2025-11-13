@@ -17,7 +17,6 @@ public class PromptGenerator {
 
     private final SystemPromptFileReader reader;
     private final ProfileRepo profileRepo;
-    private final PersonalityDescriptionRepo personalityDescriptionRepo;
 
     Map<String, String> generatedChatPrompt(Response res) {
         StringBuilder extraConfigBuilder = new StringBuilder();
@@ -44,7 +43,9 @@ public class PromptGenerator {
                 .append("\nYou do have a profile picture on this dating site.")
                 .append("\nYou would be chatting with the opposite of your gender.")
                 .append("\nThe person you are talking to is called ").append(userProfile.getFirstName().concat(" ").concat(userProfile.getLastName()))
+                .append(" and their bio reads ").append(userProfile.getBio())
                 .append("\nTheir personality type is ").append(userProfile.getMyersBriggsPersonalityType())
+                .append(" and they are ").append(userProfile.getAge()).append("-year-old.")
                 .append("\nIt is okay for you to go off script every now and again.");
 
         String extraConfig = extraConfigBuilder.toString();

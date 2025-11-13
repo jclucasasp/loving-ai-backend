@@ -43,4 +43,25 @@ public class EmailSender {
 
         return HttpStatusCode.valueOf(200);
     }
+
+    public void newSignUp(String toEmail) {
+        String template = "Email: " + toEmail;
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+
+            mimeMessage.setFrom(fromEmail);
+            mimeMessage.setRecipients(MimeMessage.RecipientType.TO, fromEmail);
+            mimeMessage.setSubject("New Sign Up");
+            mimeMessage.setText(template);
+
+            mailSender.send(mimeMessage);
+        } catch (MessagingException m) {
+            log.error("Email failed: ", m);
+            HttpStatusCode.valueOf(400);
+            return;
+        }
+
+        HttpStatusCode.valueOf(200);
+    }
 }

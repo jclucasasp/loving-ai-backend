@@ -51,7 +51,7 @@ public class UserController {
     @GetMapping(path = "/api/user/{email}", params = "email")
     ResponseEntity<User> getUserByEmail(@PathVariable(name = "email") String email) {
         return ResponseEntity.ok(userRepo.getUserByEmail(email).orElseThrow(() -> {
-            log.debug("No user found for email: [ {} ]", email);
+            log.error("No user found for email: [ {} ]", email);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for email: [ " + email + " ]");
         }));
     }
@@ -59,7 +59,7 @@ public class UserController {
     @GetMapping(path = "/api/user/all")
     ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepo.getAll().orElseThrow(() -> {
-            log.debug("No users found...");
+            log.error("No users found...");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }));
     }
@@ -86,7 +86,7 @@ public class UserController {
         }
 
         if (userRepo.existsAllByEmail(email)) {
-            log.debug("Email : {} already exist...", email);
+            log.error("Email : {} already exist...", email);
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exist");
         }
 
@@ -94,27 +94,39 @@ public class UserController {
         boolean imageSaved = fileCopier.createFile(imageFile, fileName, gender.toString().toLowerCase());
 
         if (!imageSaved) {
+            log.error("Unable to save image for user: [{}]",email);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         String hashedPassword = encoder.encode(password);
 
         User user = new User(email, hashedPassword);
-        userRepo.save(user);
+
+        User saveUser = userRepo.save(user);
+        if (saveUser.email().isBlank()) {
+            log.error("Unable to create user: [{}]",email);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        log.info("New user created: [{}]", saveUser.email());
 
         Profile newProfile;
-
         if (gender.equals(Gender.FEMALE)) {
-            newProfile = new Profile(user.id(), firstName, lastName, age,
+            newProfile = new Profile(saveUser.id(), firstName, lastName, age,
                     ethnicity, gender, bio, "women/".concat(fileName), false, false, myersBriggsPersonalityType);
 
         } else {
-            newProfile = new Profile(user.id(), firstName, lastName, age,
+            newProfile = new Profile(saveUser.id(), firstName, lastName, age,
                     ethnicity, gender, bio, "men/".concat(fileName), false, false, myersBriggsPersonalityType);
         }
 
-        profileRepo.save(newProfile);
+        Profile savedProfile = profileRepo.save(newProfile);
+        if (savedProfile.getUserId().isEmpty()) {
+            log.error("Unable to create profile: [{}]", email);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
 
+        log.info("New profile created: [{}]", email);
         return ResponseEntity.ok("User " + firstName + " " + lastName + " created");
     }
 
@@ -134,9 +146,11 @@ public class UserController {
         User userFound = findUser(req.email());
 
         if (!encoder.matches(req.password(), userFound.password()) || userFound.end_date() != null) {
-            log.debug("Unauthorised");
+            log.error("Unauthorised: [{}] ",req.email());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorised");
         }
+
+        log.info("User logged in: [{}]", userFound.email());
 
         boolean currentSession = sessionRepo.existsByUserIdAndLogOutDateIsNull(userFound.id());
 
@@ -149,7 +163,7 @@ public class UserController {
 
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> {
-                    log.debug("Unable to find profile for user");
+                    log.error("Unable to find profile for user: [{}]", userFound.id());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -172,7 +186,7 @@ public class UserController {
         UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
 
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
-        log.info("User logged out");
+        log.info("Logout request for user: [{}]",userFound.email());
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -198,6 +212,7 @@ public class UserController {
         }
 
         if (userFound.end_date() != null) {
+            log.error("Disabled user trying to log in: [{}]", userFound.email());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
@@ -208,7 +223,7 @@ public class UserController {
             log.info("\nOTP already exist for user: [{}]", otpService.getOtpHasMap(userFound.email()));
             otp = otpService.getOtpHasMap(userFound.email());
         }
-
+        // TODO: Change this to debug
         log.info("OTP [{}] generated for email [{}]", otp, userFound.email());
 
         otpService.otpTimer(userFound.email(), otp);
@@ -219,7 +234,7 @@ public class UserController {
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
         HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(),
-                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), Boolean.TRUE.equals(userProfile.isVerified()) ? message1 : message2);
+                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), userProfile.isVerified() ? message1 : message2);
 
         return ResponseEntity.status(httpStatusCode).build();
     }
@@ -238,10 +253,13 @@ public class UserController {
         }
 
         profileRepo.findFirstAndUpdateVerified(userFound.id(), true);
+        log.info("User Verified: [{}]", userFound.email());
+
+        emailSender.newSignUp(userFound.email()) ;
 
         return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> {
-                    log.debug("Unable to find profile for user");
+                    log.error("Unable to find profile for user: [{}]",userFound.id());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
                 })
         );
@@ -257,6 +275,7 @@ public class UserController {
         User userFound = findUser(req.email());
 
         if (!otpService.getOtpHasMap(req.email()).equals(req.otp())) {
+            log.error("Incorrect OTP entered by user: [{}]", req.email());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
@@ -270,20 +289,26 @@ public class UserController {
                 userFound.active()
         );
 
-        userRepo.save(updatedUser);
+        User resetUser = userRepo.save(updatedUser);
+
+        if (resetUser.email().isBlank()) {
+            log.error("Unable to reset password for user: [{}]", req.email());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        log.info("Password reset for user: [{}]", userFound.email());
 
         return ResponseEntity.ok(updatedUser);
     }
 
     private User findUser(String userId) {
         if (userId.contains("@")) {
-            log.info("Incoming request for user email: [{}]", userId);
+            log.debug("Incoming request for user email: [{}]", userId);
            return userRepo.getUserByEmail(userId).orElseThrow(() -> {
                log.error("No user returned for email: [{}]", userId);
                return new ResponseStatusException(HttpStatus.NOT_FOUND);
            });
         } else {
-            log.info("Incoming request for user Id: [{}]", userId);
+            log.debug("Incoming request for user Id: [{}]", userId);
             return userRepo.getUserById(userId).orElseThrow(() -> {
                 log.error("No user returned for userId: [{}]", userId);
                 return new ResponseStatusException(HttpStatus.NOT_FOUND);
