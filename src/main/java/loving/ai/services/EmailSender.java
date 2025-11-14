@@ -52,7 +52,7 @@ public class EmailSender {
 
             mimeMessage.setFrom(fromEmail);
             mimeMessage.setRecipients(MimeMessage.RecipientType.TO, fromEmail);
-            mimeMessage.setSubject("New Sign Up");
+            mimeMessage.setSubject("New Signup");
             mimeMessage.setText(template);
 
             mailSender.send(mimeMessage);

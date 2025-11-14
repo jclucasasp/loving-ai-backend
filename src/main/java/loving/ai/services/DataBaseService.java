@@ -119,7 +119,7 @@ public class DataBaseService {
 
             for (File profile : profiles) {
 
-                if (profile.getName().endsWith(".txt")) {
+                if (!profile.getName().endsWith(".json")) {
                     continue;
                 }
                 List<Profile> profileList = gson.fromJson(new FileReader(profile), new TypeToken<List<Profile>>() {
