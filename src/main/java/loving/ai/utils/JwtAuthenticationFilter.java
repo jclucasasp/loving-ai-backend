@@ -28,10 +28,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
         this.userRepo = userRepo;
     }
-
-
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -39,28 +40,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = header.substring(7);
+
         try {
             Claims claims = jwtUtil.parse(token);
             String email = claims.getSubject();
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 userRepo.getUserByEmail(email).ifPresent(user -> {
-                    if (jwtUtil.valid(token, email) && user.active() == null || Boolean.TRUE.equals(user.active())) {
-                        var auth = new UsernamePasswordAuthenticationToken(
-                                user.email(),
-                                null,
-                                (user.roles() != null ? user.roles() : Set.of("USER"))
-                                        .stream()
-                                        .map(SimpleGrantedAuthority::new)
-                                        .collect(Collectors.toList())
+                    if (jwtUtil.valid(token, email) &&
+                            (user.active() == null || user.active())) {
+
+                        var authorities = (user.roles() != null ? user.roles() : Set.of("USER"))
+                                .stream()
+                                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                                .toList();
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        user,           // ← FULL USER OBJECT
+                                        null,
+                                        authorities
+                                );
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
                         );
-                        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(auth);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 });
             }
         } catch (Exception e) {
-            filterChain.doFilter(request, response);
+            // Invalid token → continue as unauthenticated
         }
+
+        filterChain.doFilter(request, response);
     }
 }

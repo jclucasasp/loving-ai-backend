@@ -1,6 +1,9 @@
 package loving.ai.user;
 
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import loving.ai.profile.Gender;
 import loving.ai.profile.Profile;
 import loving.ai.profile.ProfileRepo;
@@ -12,14 +15,11 @@ import loving.ai.session.UserSession;
 import loving.ai.session.UserSessionRepo;
 import lombok.extern.log4j.Log4j2;
 import loving.ai.utils.JwtUtil;
-import org.springframework.core.env.AbstractEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +33,6 @@ import java.util.*;
 public class UserController {
 
     private final JwtUtil jwtUtil;
-    private final AuthenticationManager authManager;
     private final PasswordAndOTPGenerator otpGenerator;
     private final UserSessionRepo sessionRepo;
     private final EmailSender emailSender;
@@ -42,7 +41,6 @@ public class UserController {
     private final UserRepo userRepo;
     private final OTPService otpService;
     PasswordEncoder encoder;
-    private final Environment environment;
 
     public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService, JwtUtil jwtUtil, AuthenticationManager authManager, Environment environment) {
         this.userRepo = userRepo;
@@ -52,8 +50,6 @@ public class UserController {
         this.emailSender = emailSender;
         this.fileCopier = fileCopier;
         this.jwtUtil = jwtUtil;
-        this.authManager = authManager;
-        this.environment = environment;
         this.encoder = new BCryptPasswordEncoder();
         this.otpService = new OTPService();
     }
@@ -145,46 +141,63 @@ public class UserController {
     }
 
     @PostMapping(path = "/api/user/login")
-    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody User req) {
+    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
         if (req.email() == null || req.password() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        Authentication auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email(), req.password()));
+        String refreshToken = extractRefreshTokenFromCookie(request);
 
-        User user = userRepo.getUserByEmail(req.email()).orElseThrow();
-        if (user.end_date() != null || !Boolean.TRUE.equals(user.active())) {
+        User userFound = userRepo.getUserByEmail(req.email()).orElseThrow();
+        if (!encoder.matches(req.password(), userFound.password()) || userFound.end_date() != null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        Set<String> roles = user.roles() != null ? user.roles() : Set.of("USER");
+        log.debug("User logged in [{}]", req.email());
+
+        Set<String> roles = userFound.roles() != null ? userFound.roles() : Set.of("USER");
         String access = jwtUtil.accessToken(req.email(), roles);
         String refresh = jwtUtil.refreshToken(req.email());
 
-        Profile profile = profileRepo.getProfileByUserId(user.id())
+        Profile profile = profileRepo.getProfileByUserId(userFound.id())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        Cookie cookie = new Cookie("refresh_token", refresh);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setMaxAge(60 * 60 * 24 * 7);
+        response.addCookie(cookie);
 
         return ResponseEntity.ok(Map.of(
                 "accessToken", access,
-                "refreshToken", refresh,
                 "profile", profile
         ));
     }
 
     @PostMapping(path = "/api/user/refresh")
-    public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> body) {
-        String token = body.get("refreshToken");
-        Claims claims = jwtUtil.parse(token);
+    public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = extractRefreshTokenFromCookie(request);
+
+        log.debug("RefreshToken: [{}]", refreshToken);
+        Claims claims = jwtUtil.parse(refreshToken);
         String email = claims.getSubject();
 
         User user = userRepo.getUserByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!jwtUtil.valid(token, email)) {
+        if (!jwtUtil.valid(refreshToken, email)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
         Set<String> roles = user.roles() != null ? user.roles() : Set.of("USER");
-        return ResponseEntity.ok(Map.of("accessToken", jwtUtil.accessToken(email, roles), "refreshToken", jwtUtil.refreshToken(email)));
+
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setMaxAge(60 * 60 * 24 * 7);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(Map.of("accessToken", jwtUtil.accessToken(email, roles)));
     }
 
     @PostMapping(path = "/api/user/logout")
@@ -345,5 +358,14 @@ public class UserController {
                 return new ResponseStatusException(HttpStatus.NOT_FOUND);
             });
         }
+    }
+
+    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+    return Arrays.stream(request.getCookies())
+            .filter(c -> "refreshToken".equals(c.getName()))
+            .findFirst()
+            .map(Cookie::getValue)
+            .orElse(null);
     }
 }

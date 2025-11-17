@@ -33,7 +33,7 @@ import java.util.List;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-     private final JwtAuthenticationFilter jwtFilter;
+    private final JwtAuthenticationFilter jwtFilter;
     private final Environment environment;
 
     // Remove String activeProfile — use environment.getActiveProfiles()
@@ -45,20 +45,21 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/user/create", "/api/user/otp", "/api/user/verify", "/api/user/reset",
-                    "/api/user/login", "/api/user/refresh", "api/test",
-                    "/images/**", "/v3/api-docs/**", "/swagger**",
-                    "/api/personality/types", "/api/personality/descriptions"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(h -> h.cacheControl(Customizer.withDefaults()));
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(Customizer.withDefaults())
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/user/create", "/api/user/otp", "/api/user/verify", "/api/user/reset",
+                                "/api/user/login", "/api/user/refresh", "api/test",
+                                "/images/**", "/v3/api-docs/**", "/swagger**",
+                                "/api/personality/types", "/api/personality/descriptions"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(h -> h.cacheControl(Customizer.withDefaults()));
 
         return http.build();
     }
@@ -73,15 +74,15 @@ public class WebSecurityConfig {
 
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
         configuration.setAllowedOrigins(isDev
-            ? List.of("http://localhost:5173", "https://loving-ai.com", "https://www.loving-ai.com")
-            : List.of("https://loving-ai.com", "https://www.loving-ai.com"));
+                ? List.of("http://localhost:5173", "https://loving-ai.com", "https://www.loving-ai.com")
+                : List.of("https://loving-ai.com", "https://www.loving-ai.com"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
-     @Bean
+    @Bean
     public UserDetailsService userDetailsService(UserRepo userRepo) {
         return email -> {
             User user = userRepo.getUserByEmail(email)
@@ -107,7 +108,7 @@ public class WebSecurityConfig {
         return provider;
     }
 
-     @Bean
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
