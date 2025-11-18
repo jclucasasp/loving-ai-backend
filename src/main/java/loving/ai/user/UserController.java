@@ -16,16 +16,14 @@ import loving.ai.session.UserSessionRepo;
 import lombok.extern.log4j.Log4j2;
 import loving.ai.utils.JwtUtil;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.http.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.*;
 
 @Log4j2
@@ -40,9 +38,10 @@ public class UserController {
     private final FileCopier fileCopier;
     private final UserRepo userRepo;
     private final OTPService otpService;
+    private final Environment environment;
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService, JwtUtil jwtUtil, AuthenticationManager authManager, Environment environment) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService, JwtUtil jwtUtil, Environment environment) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
         this.sessionRepo = sessionRepo;
@@ -50,8 +49,9 @@ public class UserController {
         this.emailSender = emailSender;
         this.fileCopier = fileCopier;
         this.jwtUtil = jwtUtil;
+        this.environment = environment;
         this.encoder = new BCryptPasswordEncoder();
-        this.otpService = new OTPService();
+        this.otpService = otpService;
     }
 
     @GetMapping(path = "/api/user/{email}", params = "email")
@@ -141,12 +141,11 @@ public class UserController {
     }
 
     @PostMapping(path = "/api/user/login")
-    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Profile> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
+
         if (req.email() == null || req.password() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
-        String refreshToken = extractRefreshTokenFromCookie(request);
 
         User userFound = userRepo.getUserByEmail(req.email()).orElseThrow();
         if (!encoder.matches(req.password(), userFound.password()) || userFound.end_date() != null) {
@@ -155,49 +154,68 @@ public class UserController {
 
         log.debug("User logged in [{}]", req.email());
 
+        Profile userFoundProfile = profileRepo.getProfileByUserId(userFound.id())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
         Set<String> roles = userFound.roles() != null ? userFound.roles() : Set.of("USER");
         String access = jwtUtil.accessToken(req.email(), roles);
         String refresh = jwtUtil.refreshToken(req.email());
 
-        Profile profile = profileRepo.getProfileByUserId(userFound.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
 
-        Cookie cookie = new Cookie("refresh_token", refresh);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setMaxAge(60 * 60 * 24 * 7);
-        response.addCookie(cookie);
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", access)
+                .httpOnly(true)
+                .secure(!isDev)
+                .sameSite(isDev ? "Lax" : "None")
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))           // short-lived
+                .domain(isDev ? null : ".loving-ai.com")
+                .build();
 
-        return ResponseEntity.ok(Map.of(
-                "accessToken", access,
-                "profile", profile
-        ));
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refresh)
+                .httpOnly(true)
+                .secure(!isDev)
+                .sameSite(isDev ? "Lax" : "None")
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .domain(isDev ? null : ".loving-ai.com")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(userFoundProfile);
     }
 
     @PostMapping(path = "/api/user/refresh")
     public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractRefreshTokenFromCookie(request);
+        String refreshToken = extractCookie(request, "refresh_token");
+        if (refreshToken == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 
-        log.debug("RefreshToken: [{}]", refreshToken);
         Claims claims = jwtUtil.parse(refreshToken);
         String email = claims.getSubject();
+        User user = userRepo.getUserByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        User user = userRepo.getUserByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (!jwtUtil.valid(refreshToken, email)) {
+        if (!jwtUtil.valid(refreshToken, email))
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        }
 
         Set<String> roles = user.roles() != null ? user.roles() : Set.of("USER");
+        String newAccess = jwtUtil.accessToken(email, roles);
 
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setMaxAge(60 * 60 * 24 * 7);
-        response.addCookie(cookie);
+        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
+        ResponseCookie newAccessCookie = ResponseCookie.from("access_token", newAccess)
+                .httpOnly(true)
+                .secure(!isDev)
+                .sameSite(isDev ? "Lax" : "None")
+                .path("/")
+                .maxAge(Duration.ofMinutes(15))
+                .domain(isDev ? null : ".loving-ai.com")
+                .build();
 
-        return ResponseEntity.ok(Map.of("accessToken", jwtUtil.accessToken(email, roles)));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, newAccessCookie.toString())
+                .build();
     }
 
     @PostMapping(path = "/api/user/logout")
@@ -254,8 +272,8 @@ public class UserController {
             log.info("\nOTP already exist for user: [{}]", otpService.getOtpHasMap(userFound.email()));
             otp = otpService.getOtpHasMap(userFound.email());
         }
-        // TODO: Change this to debug
-        log.info("OTP [{}] generated for email [{}]", otp, userFound.email());
+
+        log.debug("OTP [{}] generated for email [{}]", otp, userFound.email());
 
         otpService.otpTimer(userFound.email(), otp);
 
@@ -360,12 +378,12 @@ public class UserController {
         }
     }
 
-    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+    private String extractCookie(HttpServletRequest request, String name) {
         if (request.getCookies() == null) return null;
-    return Arrays.stream(request.getCookies())
-            .filter(c -> "refreshToken".equals(c.getName()))
-            .findFirst()
-            .map(Cookie::getValue)
-            .orElse(null);
+        return Arrays.stream(request.getCookies())
+                .filter(c -> name.equals(c.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
     }
 }

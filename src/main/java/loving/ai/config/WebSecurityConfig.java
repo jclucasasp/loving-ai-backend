@@ -93,8 +93,8 @@ public class WebSecurityConfig {
                     .password(user.password())
                     .roles(user.roles() != null ? user.roles().toArray(String[]::new) : new String[]{"USER"})
                     .accountExpired(user.end_date() != null)
-                    .accountLocked(false)  // Add if you have lock logic
-                    .credentialsExpired(user.passwordResetDate() != null /* + expiry check */)
+                    .accountLocked(user.end_date() != null)  // Add if you have lock logic
+                    .credentialsExpired(user.end_date() != null /* + expiry check */)
                     .disabled(user.active() == null || !user.active())
                     .build();
         };
