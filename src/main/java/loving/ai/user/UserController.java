@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import loving.ai.utils.TokenType;
 import loving.ai.profile.Gender;
 import loving.ai.profile.Profile;
 import loving.ai.profile.ProfileRepo;
@@ -141,7 +142,8 @@ public class UserController {
     }
 
     @PostMapping(path = "/api/user/login")
-    public ResponseEntity<Profile> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
+//        clearCookies(response);
 
         if (req.email() == null || req.password() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -158,21 +160,12 @@ public class UserController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         Set<String> roles = userFound.roles() != null ? userFound.roles() : Set.of("USER");
-        String access = jwtUtil.accessToken(req.email(), roles);
-        String refresh = jwtUtil.refreshToken(req.email());
+        String accessToken = jwtUtil.accessToken(req.email(), roles);
+        String refreshToken = jwtUtil.refreshToken(req.email());
 
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
 
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", access)
-                .httpOnly(true)
-                .secure(!isDev)
-                .sameSite(isDev ? "Lax" : "None")
-                .path("/")
-                .maxAge(Duration.ofMinutes(15))           // short-lived
-                .domain(isDev ? null : ".loving-ai.com")
-                .build();
-
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refresh)
+        ResponseCookie refreshCookie = ResponseCookie.from(TokenType.REFRESH_TOKEN.getValue(), refreshToken)
                 .httpOnly(true)
                 .secure(!isDev)
                 .sameSite(isDev ? "Lax" : "None")
@@ -181,15 +174,18 @@ public class UserController {
                 .domain(isDev ? null : ".loving-ai.com")
                 .build();
 
+        Map<String, Object> body = Map.of(TokenType.ACCESS_TOKEN.getValue(), accessToken, "profile", userFoundProfile);
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(userFoundProfile);
+                .body(body);
     }
 
     @PostMapping(path = "/api/user/refresh")
-    public ResponseEntity<Map<String, Object>> refresh(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = extractCookie(request, "refresh_token");
+    public ResponseEntity<Map<String, Object>> refresh(HttpServletRequest request, HttpServletResponse response) {
+        clearCookies(response);
+
+        String refreshToken = extractCookie(request, TokenType.REFRESH_TOKEN.getValue());
         if (refreshToken == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 
         Claims claims = jwtUtil.parse(refreshToken);
@@ -204,22 +200,20 @@ public class UserController {
         String newAccess = jwtUtil.accessToken(email, roles);
 
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        ResponseCookie newAccessCookie = ResponseCookie.from("access_token", newAccess)
+        ResponseCookie newAccessCookie = ResponseCookie.from(TokenType.ACCESS_TOKEN.getValue(), newAccess)
                 .httpOnly(true)
-                .secure(!isDev)
+                .secure(true)
                 .sameSite(isDev ? "Lax" : "None")
                 .path("/")
                 .maxAge(Duration.ofMinutes(15))
                 .domain(isDev ? null : ".loving-ai.com")
                 .build();
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, newAccessCookie.toString())
-                .build();
+        return ResponseEntity.ok(Map.of(TokenType.ACCESS_TOKEN.getValue(), newAccessCookie.toString()));
     }
 
     @PostMapping(path = "/api/user/logout")
-    public ResponseEntity<HttpStatus> userLogout(@RequestBody User req) {
+    public ResponseEntity<HttpStatus> userLogout(@RequestBody User req, HttpServletResponse response) {
 
         if (req.id().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -237,6 +231,7 @@ public class UserController {
         sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
         log.info("Logout request for user: [{}]", userFound.email());
 
+        clearCookies(response);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -314,12 +309,6 @@ public class UserController {
         );
     }
 
-//    @GetMapping(path = "/api/test")
-//    public ResponseEntity<String> test() {
-//        String token = jwtUtil.accessToken("test@lovingai.com", Set.of("USER"));
-//        return ResponseEntity.ok("Generated JWT: " + token);
-//    }
-
     @PostMapping(path = "/api/user/reset")
     public ResponseEntity<User> ResetPassword(@RequestBody NewUser req) {
 
@@ -385,5 +374,11 @@ public class UserController {
                 .findFirst()
                 .map(Cookie::getValue)
                 .orElse(null);
+    }
+
+    private void clearCookies(HttpServletResponse response) {
+        response.addHeader("Set-Cookie", TokenType.ACCESS_TOKEN.getValue() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", TokenType.REFRESH_TOKEN.getValue() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
     }
 }

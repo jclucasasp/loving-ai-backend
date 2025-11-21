@@ -3,7 +3,6 @@ package loving.ai.config;
 import loving.ai.user.User;
 import loving.ai.user.UserRepo;
 import loving.ai.utils.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -35,82 +34,80 @@ public class WebSecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final Environment environment;
+    private final UserRepo userRepo;               // <-- inject only what you really need
+    private final PasswordEncoder passwordEncoder; // <-- we'll create it here
 
-    // Remove String activeProfile — use environment.getActiveProfiles()
-    public WebSecurityConfig(JwtAuthenticationFilter jwtFilter, Environment environment) {
+    public WebSecurityConfig(JwtAuthenticationFilter jwtFilter, Environment environment, UserRepo userRepo) {
         this.jwtFilter = jwtFilter;
         this.environment = environment;
+        this.userRepo = userRepo;
+        this.passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .cors(Customizer.withDefaults())
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/user/create", "/api/user/otp", "/api/user/verify", "/api/user/reset",
-                                "/api/user/login", "/api/user/refresh", "api/test",
-                                "/images/**", "/v3/api-docs/**", "/swagger**",
-                                "/api/personality/types", "/api/personality/descriptions"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(h -> h.cacheControl(Customizer.withDefaults()));
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .securityContext(s -> s.requireExplicitSave(false))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/user/create", "/api/user/otp", "/api/user/verify", "/api/user/reset",
+                    "/api/user/login", "/api/user/refresh",
+                    "/api/personality/types", "/api/personality/descriptions",
+                    "/images/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
+                ).permitAll()
+                .anyRequest().authenticated()
+            )
+            .authenticationProvider(authenticationProvider()) // <-- this is fine now
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // This bean is now safe – it uses the injected userRepo
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setMaxAge(3600L);
-
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        configuration.setAllowedOrigins(isDev
-                ? List.of("http://localhost:5173", "https://loving-ai.com", "https://www.loving-ai.com")
-                : List.of("https://loving-ai.com", "https://www.loving-ai.com"));
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+    public UserDetailsService userDetailsService() {
+        return email -> userRepo.getUserByEmail(email)
+            .map(user -> org.springframework.security.core.userdetails.User
+                .withUsername(user.email())
+                .password(user.password())
+                .roles(user.roles() != null ? user.roles().toArray(String[]::new) : new String[]{"USER"})
+                .accountExpired(user.end_date() != null)
+                .accountLocked(user.end_date() != null)
+                .credentialsExpired(user.end_date() != null)
+                .disabled(user.active() == null || !user.active())
+                .build()
+            )
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 
+    // This bean uses the UserDetailsService bean above – no cycle
     @Bean
-    public UserDetailsService userDetailsService(UserRepo userRepo) {
-        return email -> {
-            User user = userRepo.getUserByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-
-            return org.springframework.security.core.userdetails.User
-                    .withUsername(user.email())
-                    .password(user.password())
-                    .roles(user.roles() != null ? user.roles().toArray(String[]::new) : new String[]{"USER"})
-                    .accountExpired(user.end_date() != null)
-                    .accountLocked(user.end_date() != null)  // Add if you have lock logic
-                    .credentialsExpired(user.end_date() != null /* + expiry check */)
-                    .disabled(user.active() == null || !user.active())
-                    .build();
-        };
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsService());
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setMaxAge(3600L);
+
+        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
+        config.setAllowedOrigins(isDev
+            ? List.of("http://localhost:5173", "https://loving-ai.com", "https://www.loving-ai.com")
+            : List.of("https://loving-ai.com", "https://www.loving-ai.com"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
