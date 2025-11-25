@@ -1,8 +1,6 @@
 package loving.ai.utils;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -50,7 +48,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public Claims parse(String token) {
+    public Claims parse(String token) throws JwtException {
         return Jwts.parser()
                 .verifyWith(key())
                 .build()

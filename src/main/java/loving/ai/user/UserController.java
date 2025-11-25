@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.WebUtils;
 
 import java.time.Duration;
 import java.util.*;
@@ -163,29 +164,34 @@ public class UserController {
         String accessToken = jwtUtil.accessToken(req.email(), roles);
         String refreshToken = jwtUtil.refreshToken(req.email());
 
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
+        Cookie refreshCookie = getCookie(refreshToken);
+        response.addCookie(refreshCookie);
 
-        ResponseCookie refreshCookie = ResponseCookie.from(TokenType.REFRESH_TOKEN.getValue(), refreshToken)
-                .httpOnly(true)
-                .secure(!isDev)
-                .sameSite(isDev ? "Lax" : "None")
-                .path("/")
-                .maxAge(Duration.ofDays(7))
-                .domain(isDev ? null : ".loving-ai.com")
-                .build();
-
-        Map<String, Object> body = Map.of(TokenType.ACCESS_TOKEN.getValue(), accessToken, "profile", userFoundProfile);
+        Map<String, Object> body = Map.of(TokenType.ACCESS_TOKEN.name(), accessToken, "profile", userFoundProfile);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .body(body);
     }
 
+    private Cookie getCookie(String refreshToken) {
+        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
+
+        Cookie refreshCookie = new Cookie(TokenType.REFRESH_TOKEN.name(), refreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(!isDev);
+//        refreshCookie.setAttribute(isDev ? "Lax" : "None");
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(36000);
+        refreshCookie.setDomain(isDev ? null : ".loving-ai.com");
+        return refreshCookie;
+    }
+
     @PostMapping(path = "/api/user/refresh")
     public ResponseEntity<Map<String, Object>> refresh(HttpServletRequest request, HttpServletResponse response) {
         clearCookies(response);
 
-        String refreshToken = extractCookie(request, TokenType.REFRESH_TOKEN.getValue());
+        String refreshToken = extractCookie(request, TokenType.REFRESH_TOKEN.name());
         if (refreshToken == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 
         Claims claims = jwtUtil.parse(refreshToken);
@@ -200,7 +206,7 @@ public class UserController {
         String newAccess = jwtUtil.accessToken(email, roles);
 
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        ResponseCookie newAccessCookie = ResponseCookie.from(TokenType.ACCESS_TOKEN.getValue(), newAccess)
+        ResponseCookie newAccessCookie = ResponseCookie.from(TokenType.ACCESS_TOKEN.name(), newAccess)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite(isDev ? "Lax" : "None")
@@ -209,7 +215,7 @@ public class UserController {
                 .domain(isDev ? null : ".loving-ai.com")
                 .build();
 
-        return ResponseEntity.ok(Map.of(TokenType.ACCESS_TOKEN.getValue(), newAccessCookie.toString()));
+        return ResponseEntity.ok(Map.of(TokenType.ACCESS_TOKEN.name(), newAccessCookie.toString()));
     }
 
     @PostMapping(path = "/api/user/logout")
@@ -369,16 +375,20 @@ public class UserController {
 
     private String extractCookie(HttpServletRequest request, String name) {
         if (request.getCookies() == null) return null;
-        return Arrays.stream(request.getCookies())
-                .filter(c -> name.equals(c.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
+        Cookie cookie = WebUtils.getCookie(request, name);
+        if (cookie == null) return null;
+        return cookie.getValue();
+
+//        return Arrays.stream(request.getCookies())
+//                .filter(c -> name.equals(c.getName()))
+//                .findFirst()
+//                .map(Cookie::getValue)
+//                .orElse(null);
     }
 
     private void clearCookies(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", TokenType.ACCESS_TOKEN.getValue() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", TokenType.ACCESS_TOKEN.name() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
         response.addHeader("Set-Cookie", "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
-        response.addHeader("Set-Cookie", TokenType.REFRESH_TOKEN.getValue() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", TokenType.REFRESH_TOKEN.name() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
     }
 }

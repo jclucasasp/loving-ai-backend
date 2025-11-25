@@ -3,11 +3,11 @@ package loving.ai.utils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
 import loving.ai.user.UserRepo;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Set;
 
 @Log4j2
@@ -42,37 +41,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             try {
                 Claims claims = jwtUtil.parse(token);
+                log.debug("Claims: [{}]", claims);
                 String email = claims.getSubject();
+                log.debug("Email: [{}]", email);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     userRepo.getUserByEmail(email).ifPresent(user -> {
-                        if (jwtUtil.valid(token, email) && (user.active() == null || user.active())) {
+                        if (jwtUtil.valid(token, email))  {
 
                             var authorities = (user.roles() != null ? user.roles() : Set.of("USER"))
                                     .stream()
                                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                                     .toList();
 
-                            UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(user, null, authorities);
+                            log.debug("User: [{}]", user);
+                            log.debug("Authorities: [{}]", authorities);
+
+                            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
+
                             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                             SecurityContextHolder.getContext().setAuthentication(auth);
                         }
                     });
                 }
             } catch (Exception e) {
-               log.warn("Invalid JWT token: {}", e.getMessage());
+                log.warn("Invalid JWT token: {}", e.getMessage());
             }
         }
 
         filterChain.doFilter(request, response);
     }
 
+    //TODO: Change to extract cookies.
     private String extractToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("authorization");
-        log.info("Bearer token: [{}]",bearerToken);
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+            String token = bearerToken.substring(7).trim();
+
+            // Remove surrounding quotes and brackets if present (your frontend bug)
+            if (token.startsWith("[\"") && token.endsWith("\"]")) {
+                token = token.substring(2, token.length() - 2);
+            } else if (token.startsWith("\"") && token.endsWith("\"")) {
+                token = token.substring(1, token.length() - 1);
+            }
+
+            log.debug("Extracted clean token: {}", token);
+            return token;
         }
         return null;
     }

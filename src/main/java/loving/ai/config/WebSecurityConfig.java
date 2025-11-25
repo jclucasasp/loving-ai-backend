@@ -66,7 +66,7 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    // This bean is now safe – it uses the injected userRepo
+    //TODO: need to check for user verification flag from profiles
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> userRepo.getUserByEmail(email)
