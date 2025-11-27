@@ -1,17 +1,16 @@
 package loving.ai.services;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import lombok.extern.log4j.Log4j2;
 import loving.ai.conversations.ConversationRepo;
 import loving.ai.matches.MatchRepo;
-import loving.ai.personalities.*;
 import loving.ai.personalities.*;
 import loving.ai.profile.Profile;
 import loving.ai.profile.ProfileRepo;
 import loving.ai.session.UserSessionRepo;
 import loving.ai.user.UserRepo;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +21,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 @Log4j2
 @Service
@@ -172,9 +173,9 @@ public class DataBaseService {
                 }
             }
 
-            } catch(IOException io){
-                log.error("Unable to process file: ", io);
-            }
+        } catch (IOException io) {
+            log.error("Unable to process file: ", io);
+        }
 
     }
 
@@ -209,7 +210,7 @@ public class DataBaseService {
         log.info("Attempting to read updated json files and create a list of profiles...");
 
         try {
-            for (File profile: profiles) {
+            for (File profile : profiles) {
                 if (!profile.getName().endsWith(".json")) {
                     continue;
                 }
@@ -299,7 +300,7 @@ public class DataBaseService {
         log.info("Getting a list of profiles from folder: [{}]", PROFILES_FOLDER);
         File filePath = new File(PROFILES_FOLDER);
 
-        if(!filePath.exists() || !filePath.isDirectory()){
+        if (!filePath.exists() || !filePath.isDirectory()) {
             log.error("Folder [{}] does not exist...", PROFILES_FOLDER);
             return null;
         }

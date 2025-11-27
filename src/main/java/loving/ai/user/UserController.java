@@ -4,7 +4,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import loving.ai.utils.TokenType;
+import lombok.extern.log4j.Log4j2;
 import loving.ai.profile.Gender;
 import loving.ai.profile.Profile;
 import loving.ai.profile.ProfileRepo;
@@ -14,10 +14,13 @@ import loving.ai.services.OTPService;
 import loving.ai.services.PasswordAndOTPGenerator;
 import loving.ai.session.UserSession;
 import loving.ai.session.UserSessionRepo;
-import lombok.extern.log4j.Log4j2;
 import loving.ai.utils.JwtUtil;
+import loving.ai.utils.TokenType;
+import org.apache.tomcat.util.http.SameSiteCookies;
 import org.springframework.core.env.Environment;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.WebUtils;
 
-import java.time.Duration;
 import java.util.*;
 
 @Log4j2
@@ -144,8 +146,6 @@ public class UserController {
 
     @PostMapping(path = "/api/user/login")
     public ResponseEntity<Map<String, Object>> userLogin(@RequestBody User req, HttpServletRequest request, HttpServletResponse response) {
-//        clearCookies(response);
-
         if (req.email() == null || req.password() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
@@ -164,58 +164,51 @@ public class UserController {
         String accessToken = jwtUtil.accessToken(req.email(), roles);
         String refreshToken = jwtUtil.refreshToken(req.email());
 
-        Cookie refreshCookie = getCookie(refreshToken);
+        Cookie refreshCookie = setRefreshCookie(refreshToken);
         response.addCookie(refreshCookie);
 
-        Map<String, Object> body = Map.of(TokenType.ACCESS_TOKEN.name(), accessToken, "profile", userFoundProfile);
+        Map<String, Object> body = Map.of(TokenType.accessToken.name(), accessToken, "profile", userFoundProfile);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(body);
-    }
-
-    private Cookie getCookie(String refreshToken) {
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-
-        Cookie refreshCookie = new Cookie(TokenType.REFRESH_TOKEN.name(), refreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(!isDev);
-//        refreshCookie.setAttribute(isDev ? "Lax" : "None");
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(36000);
-        refreshCookie.setDomain(isDev ? null : ".loving-ai.com");
-        return refreshCookie;
+        return ResponseEntity.ok().body(body);
     }
 
     @PostMapping(path = "/api/user/refresh")
     public ResponseEntity<Map<String, Object>> refresh(HttpServletRequest request, HttpServletResponse response) {
-        clearCookies(response);
 
-        String refreshToken = extractCookie(request, TokenType.REFRESH_TOKEN.name());
-        if (refreshToken == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        String oldRefreshToken = extractCookie(request, TokenType.refreshToken.name());
+        log.info("Old RefreshToken: [{}]", oldRefreshToken);
 
-        Claims claims = jwtUtil.parse(refreshToken);
+        if (oldRefreshToken == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+
+        Claims claims = jwtUtil.parse(oldRefreshToken);
         String email = claims.getSubject();
+
         User user = userRepo.getUserByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        if (!jwtUtil.valid(refreshToken, email))
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        if (!jwtUtil.valid(oldRefreshToken, email)) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 
         Set<String> roles = user.roles() != null ? user.roles() : Set.of("USER");
-        String newAccess = jwtUtil.accessToken(email, roles);
+        String newAccessToken = jwtUtil.accessToken(email, roles);
 
+        String newRefreshToken = jwtUtil.refreshToken(email);
+
+        Cookie refreshCookie = setRefreshCookie(newRefreshToken);  // ← NEW token
+        response.addCookie(refreshCookie);
+
+        return ResponseEntity.ok(Map.of(TokenType.accessToken.name(), newAccessToken));
+    }
+
+    private Cookie setRefreshCookie(String refreshToken) {
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        ResponseCookie newAccessCookie = ResponseCookie.from(TokenType.ACCESS_TOKEN.name(), newAccess)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite(isDev ? "Lax" : "None")
-                .path("/")
-                .maxAge(Duration.ofMinutes(15))
-                .domain(isDev ? null : ".loving-ai.com")
-                .build();
-
-        return ResponseEntity.ok(Map.of(TokenType.ACCESS_TOKEN.name(), newAccessCookie.toString()));
+        Cookie refreshCookie = new Cookie(TokenType.refreshToken.name(), refreshToken);
+        refreshCookie.setHttpOnly(isDev);
+        refreshCookie.setSecure(!isDev);
+        refreshCookie.setAttribute("SameSite", SameSiteCookies.LAX.name());
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(14 * 24 * 60 * 60);
+        if (!isDev) refreshCookie.setDomain(".loving-ai.com");
+        return refreshCookie;
     }
 
     @PostMapping(path = "/api/user/logout")
@@ -387,8 +380,11 @@ public class UserController {
     }
 
     private void clearCookies(HttpServletResponse response) {
-        response.addHeader("Set-Cookie", TokenType.ACCESS_TOKEN.name() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
-        response.addHeader("Set-Cookie", "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
-        response.addHeader("Set-Cookie", TokenType.REFRESH_TOKEN.name() + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        Cookie deleteCookie = new Cookie(TokenType.refreshToken.name(), "");
+        deleteCookie.setPath("/");
+        deleteCookie.setMaxAge(0);
+        deleteCookie.setSecure(true);
+        deleteCookie.setHttpOnly(true);
+        response.addCookie(deleteCookie);
     }
 }
