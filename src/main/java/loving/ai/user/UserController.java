@@ -202,7 +202,7 @@ public class UserController {
     private Cookie setRefreshCookie(String refreshToken) {
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
         Cookie refreshCookie = new Cookie(TokenType.refreshToken.name(), refreshToken);
-        refreshCookie.setHttpOnly(isDev);
+        refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(!isDev);
         refreshCookie.setAttribute("SameSite", SameSiteCookies.LAX.name());
         refreshCookie.setPath("/");
@@ -271,13 +271,10 @@ public class UserController {
 
         otpService.otpTimer(userFound.email(), otp);
 
-        final String message1 = "Please use this one time pin: " + otp + " to reset your password on Loving AI. \nPlease note that it will expire in 10 minutes!";
-        final String message2 = "Welcome and thank you for choosing Loving AI. We hope that you enjoy the experience and we are always open to your feedback. \nPlease use this one time pin: " + otp + " to activate your profile on Loving AI. \nPlease note that it will expire in 10 minutes!";
-
         Profile userProfile = profileRepo.getProfileByUserId(userFound.id()).orElseThrow();
 
         HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(),
-                "LovingAI: OTP", userProfile.getFirstName() + " " + userProfile.getLastName(), userProfile.isVerified() ? message1 : message2);
+                userProfile.getFirstName() + " " + userProfile.getLastName(), otp);
 
         return ResponseEntity.status(httpStatusCode).build();
     }
@@ -295,17 +292,26 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        profileRepo.findFirstAndUpdateVerified(userFound.id(), true);
-        log.info("User Verified: [{}]", userFound.email());
-
-        emailSender.newSignUp(userFound.email());
-
-        return ResponseEntity.ok(profileRepo.getProfileByUserId(userFound.id())
-                .orElseThrow(() -> {
-                    log.error("Unable to find profile for user: [{}]", userFound.id());
+        Profile userProfileFound = profileRepo.getProfileByUserId(userFound.id()).orElseThrow(
+                () -> {
+                    log.error("Unable to find profile for user [{}]", userFound.id());
                     return new ResponseStatusException(HttpStatus.NOT_FOUND);
-                })
+                }
         );
+
+        profileRepo.findFirstAndUpdateVerified(userFound.id(), true);
+        userRepo.updateVerified(userFound.id(), true);
+
+        log.debug("User email: [{}] verified", userFound.email());
+
+        HttpStatusCode httpStatusCode = emailSender.sendEmail(userFound.email(), userProfileFound.getFirstName() + " " + userProfileFound.getLastName(), null);
+        if (httpStatusCode != HttpStatusCode.valueOf(200)) {
+            log.error("Unable to send welcome message to user: [{}]", userFound.email());
+        } else {
+            log.debug("Welcome message sent to user: [{}]", userFound.email());
+        }
+
+        return ResponseEntity.ok(userProfileFound);
     }
 
     @PostMapping(path = "/api/user/reset")
@@ -336,7 +342,8 @@ public class UserController {
                 userFound.end_date(),
                 new Date(),
                 userFound.active(),
-                userFound.roles()
+                userFound.roles(),
+                userFound.verified()
         );
 
         User resetUser = userRepo.save(updatedUser);

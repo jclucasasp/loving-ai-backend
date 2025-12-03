@@ -30,9 +30,9 @@ import java.util.List;
 public class WebSecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final PasswordEncoder passwordEncoder;
     private final Environment environment;
-    private final UserRepo userRepo;               // <-- inject only what you really need
-    private final PasswordEncoder passwordEncoder; // <-- we'll create it here
+    private final UserRepo userRepo;
 
     public WebSecurityConfig(JwtAuthenticationFilter jwtFilter, Environment environment, UserRepo userRepo) {
         this.jwtFilter = jwtFilter;
@@ -58,7 +58,10 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .rememberMe(remember -> remember.key("loving-ai-key")
+                        .userDetailsService(userDetailsService())
+                        .tokenValiditySeconds(14 * 24 * 60 * 60));
 
         return http.build();
     }
@@ -95,11 +98,14 @@ public class WebSecurityConfig {
         config.setAllowCredentials(true);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-//        config.setExposedHeaders(List.of("Set-Cookie"));
         config.setMaxAge(3600L);
 
         boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        if (isDev) {
+            config.setAllowedOrigins(List.of("http://localhost:5173"));
+        } else {
+            config.setAllowedOrigins(List.of("https://loving-ai.com", "https://www.loving-ai.com"));
+        }
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

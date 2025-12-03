@@ -61,6 +61,7 @@ public class ProfileController {
 
     @PostMapping(path = "/api/profile/random")
     public ResponseEntity<Profile> getRandomProfile(@RequestBody Profile req) {
+        log.info("Requesting random profile for gender: [ {} ]", req.gender);
 
         if (req.gender.equals(Gender.MALE)) {
             req.setGender(Gender.FEMALE);

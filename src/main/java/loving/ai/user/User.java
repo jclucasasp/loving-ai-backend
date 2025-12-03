@@ -25,11 +25,12 @@ public record User (
         @Nullable
         Boolean active,
         @Nullable
-        Set<String> roles
+        Set<String> roles,
+        Boolean verified
 ) {
 
 
     public User(String email, String password) {
-        this(UUID.randomUUID().toString(), email, password, new Date(), null, null, null, null);
+        this(UUID.randomUUID().toString(), email, password, new Date(), null, null, null, null, false);
     }
 }

@@ -24,6 +24,10 @@ public interface UserRepo extends MongoRepository<User, String> {
 
     @Query("{'id':?0}")
     Optional<User> getUserById(String id);
+
+    @Query("{'id':?0}")
+    @Update("{'$set':{'verified':?1}}")
+    void updateVerified(String id, boolean verified);
 }
 
 
