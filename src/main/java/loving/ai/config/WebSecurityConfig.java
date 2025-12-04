@@ -58,10 +58,7 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .rememberMe(remember -> remember.key("loving-ai-key")
-                        .userDetailsService(userDetailsService())
-                        .tokenValiditySeconds(14 * 24 * 60 * 60));
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -205,7 +205,7 @@ public class UserController {
         refreshCookie.setAttribute("SameSite", SameSiteCookies.LAX.name());
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(14 * 24 * 60 * 60);
-        if (!isDev) refreshCookie.setDomain(".loving-ai.com");
+        if (!isDev) refreshCookie.setDomain("loving-ai.com");
         return refreshCookie;
     }
 
