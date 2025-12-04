@@ -36,7 +36,6 @@ public class UserController {
 
     private final JwtUtil jwtUtil;
     private final PasswordAndOTPGenerator otpGenerator;
-    private final UserSessionRepo sessionRepo;
     private final EmailSender emailSender;
     private final ProfileRepo profileRepo;
     private final FileCopier fileCopier;
@@ -45,10 +44,9 @@ public class UserController {
     private final Environment environment;
     PasswordEncoder encoder;
 
-    public UserController(UserRepo userRepo, ProfileRepo profileRepo, UserSessionRepo sessionRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService, JwtUtil jwtUtil, Environment environment) {
+    public UserController(UserRepo userRepo, ProfileRepo profileRepo, EmailSender emailSender, PasswordAndOTPGenerator otpGenerator, FileCopier fileCopier, OTPService otpService, JwtUtil jwtUtil, Environment environment) {
         this.userRepo = userRepo;
         this.profileRepo = profileRepo;
-        this.sessionRepo = sessionRepo;
         this.otpGenerator = otpGenerator;
         this.emailSender = emailSender;
         this.fileCopier = fileCopier;
@@ -225,9 +223,8 @@ public class UserController {
 
         userRepo.findFirstByIdAndUpdate(userFound.id(), false);
 
-        UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
-
-        sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
+//        UserSession sessionFound = sessionRepo.getUserSessionByUserId(userFound.id(), null).orElseThrow();
+//        sessionRepo.findFirstByIdAndUpdate(sessionFound.sessionId(), new Date());
         log.info("Logout request for user: [{}]", userFound.email());
 
         clearCookies(response);

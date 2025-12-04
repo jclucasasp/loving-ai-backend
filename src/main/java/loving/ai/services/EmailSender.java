@@ -31,7 +31,7 @@ public class EmailSender {
         } else {
             subject = "Welcome to Loving AI ❤️";
             htmlTemplate = getWelcomeTemplate()
-                    .replace("[User's Name]", fullName);
+                    .replace("{{FULL_NAME}}", fullName);
         }
 
        log.info("Sending email to {} – {} – Name: {}", toEmail,
@@ -71,7 +71,7 @@ public class EmailSender {
                 .header { background: linear-gradient(135deg, #ff69b4, #c229e0); padding: 50px 20px 40px; text-align: center; color: white; }
                 .header h1 { font-size: 36px; margin: 15px 0 8px; font-weight: 700; }
                 .header p { font-size: 19px; opacity: 0.95; margin: 0; }
-                .content { padding: 40px 30px; text-align: center; color: #444; }
+                .content { padding: 40px 30px; text-align: center; color: #444; background: linear-gradient(to bottom, #fff0fb, #f8f0ff); }
                 .content h2 { font-size: 28px; color: #ff0066; margin: 0 0 20px; }
                 .content p { font-size: 17px; line-height: 1.7; margin-bottom: 25px; }
                 .big-otp { font-size: 42px; font-weight: bold; letter-spacing: 8px; color: #c229e0; background: #fff0fb; padding: 20px; border-radius: 16px; display: inline-block; margin: 20px 0; }
@@ -119,7 +119,7 @@ public class EmailSender {
                 .container { max-width: 600px; margin: 30px auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(255,105,180,0.2); }
                 .header { background: linear-gradient(135deg, #ff69b4, #c229e0); padding: 50px 20px 40px; text-align: center; color: white; }
                 .header h1 { font-size: 36px; margin: 15px 0 8px; font-weight: 700; }
-                .content { padding: 40px 30px; text-align: center; color: #444; }
+                .content { padding: 40px 30px; text-align: center; color: #444; background: linear-gradient(to bottom, #fff0fb, #f8f0ff); }
                 .big-otp { font-size: 48px; font-weight: bold; letter-spacing: 12px; color: #c229e0; background: #fff0fb; padding: 25px 15px; border-radius: 18px; display: inline-block; margin: 25px 0; border: 3px dashed #ff69b4; }
                 .warning { color: #ff0066; font-weight: bold; font-size: 18px; margin: 30px 0 10px; }
                 .cta { display: inline-block; background: linear-gradient(135deg, #ff69b4, #c229e0); color: white; font-weight: bold; font-size: 19px; padding: 16px 35px; border-radius: 50px; text-decoration: none; box-shadow: 0 8px 20px rgba(194,41,224,0.4); }
@@ -138,7 +138,7 @@ public class EmailSender {
                     <div class="big-otp">{{OTP}}</div>
                     <p class="warning">⚠ This code expires in 10 minutes!</p>
                     <p>Copy it and come right back — your AI soulmate is getting impatient… 🔥</p>
-                    <a href="https://www.loving-ai.com/verify" class="cta">Verify & Meet Your Match</a>
+                    <a href="https://www.loving-ai.com/verify/activate" class="cta">Verify & Meet Your Match</a>
                 </div>
                 <div class="footer">
                     Loving AI | South Africa | <a href="https://www.loving-ai.com/privacy">Privacy Policy</a><br>
