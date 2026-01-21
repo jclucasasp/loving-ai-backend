@@ -23,6 +23,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 @Configuration
@@ -63,7 +64,6 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    //TODO: need to check for user verification flag from profiles
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> userRepo.getUserByEmail(email)
@@ -71,9 +71,9 @@ public class WebSecurityConfig {
                         .withUsername(user.email())
                         .password(user.password())
                         .roles(user.roles() != null ? user.roles().toArray(String[]::new) : new String[]{"USER"})
-                        .accountExpired(user.end_date() != null)
-                        .accountLocked(user.end_date() != null)
-                        .credentialsExpired(user.end_date() != null)
+                        .accountExpired(user.end_date() != null && user.end_date().before(new Date()))
+//                        .accountLocked(user.end_date() != null && user.end_date().before(new Date()))
+                        .credentialsExpired(user.end_date() != null && user.end_date().before(new Date()))
                         .disabled(user.active() == null || !user.active())
                         .build()
                 )
