@@ -10,7 +10,6 @@ public class PasswordAndOTPGenerator {
 
     //Use cryptographically secure random number generator
     private final Random random = new SecureRandom();
-    private final StringBuilder stringBuilder = new StringBuilder();
 
     public String generatePassword(int length) {
 
@@ -25,6 +24,7 @@ public class PasswordAndOTPGenerator {
         final char[] symbols = "^$?!@#%&".toCharArray();
         final char[] allAllowed = "abcdefghijklmnopqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ0123456789^$?!@#%&".toCharArray();
 
+        StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < length - 4; i++) {
             stringBuilder.append(allAllowed[random.nextInt(allAllowed.length)]);
         }
@@ -39,8 +39,7 @@ public class PasswordAndOTPGenerator {
     }
 
     public String generateOTP(int length) {
-
-        stringBuilder.delete(0, stringBuilder.length());
+        StringBuilder stringBuilder = new StringBuilder();
 
         if (length < 6 ) {
             length = 6;
