@@ -1,4 +1,4 @@
-package loving.ai.personalities;
+package loving.ai.dto.personalities;
 
 public record PersonalityDescription(
         String id,

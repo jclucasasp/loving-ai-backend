@@ -1,8 +1,12 @@
-package loving.ai.personalities;
+package loving.ai.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import loving.ai.dto.personalities.PersonalitiesTypes;
+import loving.ai.dto.personalities.PersonalityDescription;
+import loving.ai.repo.PersonalityDescriptionRepo;
+import loving.ai.repo.PersonalityTypesRepo;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

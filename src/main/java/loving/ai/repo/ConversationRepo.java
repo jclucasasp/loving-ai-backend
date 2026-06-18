@@ -1,5 +1,6 @@
-package loving.ai.conversations;
+package loving.ai.repo;
 
+import loving.ai.conversations.Conversation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 

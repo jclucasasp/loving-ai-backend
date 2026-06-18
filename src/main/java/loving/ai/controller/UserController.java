@@ -1,19 +1,20 @@
-package loving.ai.user;
+package loving.ai.controller;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.log4j.Log4j2;
-import loving.ai.profile.Gender;
-import loving.ai.profile.Profile;
-import loving.ai.profile.ProfileRepo;
+import loving.ai.dto.profile.Gender;
+import loving.ai.dto.profile.Profile;
+import loving.ai.repo.ProfileRepo;
 import loving.ai.services.EmailSender;
 import loving.ai.services.FileCopier;
 import loving.ai.services.OTPService;
 import loving.ai.services.PasswordAndOTPGenerator;
-import loving.ai.session.UserSession;
-import loving.ai.session.UserSessionRepo;
+import loving.ai.dto.user.NewUser;
+import loving.ai.dto.user.User;
+import loving.ai.dto.user.UserRepo;
 import loving.ai.utils.JwtUtil;
 import loving.ai.utils.TokenType;
 import org.apache.tomcat.util.http.SameSiteCookies;

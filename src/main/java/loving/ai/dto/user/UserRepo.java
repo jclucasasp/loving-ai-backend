@@ -1,4 +1,4 @@
-package loving.ai.user;
+package loving.ai.dto.user;
 
 import org.springframework.data.mongodb.repository.ExistsQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;

@@ -1,6 +1,6 @@
-package loving.ai.user;
+package loving.ai.dto.user;
 
-import loving.ai.profile.Gender;
+import loving.ai.dto.profile.Gender;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import jakarta.validation.constraints.Email;

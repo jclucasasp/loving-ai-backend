@@ -1,9 +1,11 @@
-package loving.ai.matches;
+package loving.ai.controller;
 
 import loving.ai.conversations.Conversation;
-import loving.ai.conversations.ConversationRepo;
-import loving.ai.profile.Profile;
-import loving.ai.profile.ProfileRepo;
+import loving.ai.repo.ConversationRepo;
+import loving.ai.dto.matches.Match;
+import loving.ai.repo.MatchRepo;
+import loving.ai.dto.profile.Profile;
+import loving.ai.repo.ProfileRepo;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;

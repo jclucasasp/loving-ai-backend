@@ -1,4 +1,4 @@
-package loving.ai.user;
+package loving.ai.dto.user;
 
 import com.mongodb.lang.Nullable;
 import org.springframework.data.mongodb.core.index.Indexed;

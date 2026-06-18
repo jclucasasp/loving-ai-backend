@@ -1,5 +1,7 @@
-package loving.ai.profile;
+package loving.ai.repo;
 
+import loving.ai.dto.profile.Gender;
+import loving.ai.dto.profile.Profile;
 import org.springframework.data.mongodb.repository.*;
 
 import java.util.Optional;

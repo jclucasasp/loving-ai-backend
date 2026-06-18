@@ -2,9 +2,9 @@ package loving.ai.services;
 
 import loving.ai.conversations.ChatMessage;
 import loving.ai.conversations.Conversation;
-import loving.ai.conversations.ConversationRepo;
+import loving.ai.repo.ConversationRepo;
 import loving.ai.services.interfaces.ResponseServiceInterface;
-import loving.ai.responses.Response;
+import loving.ai.dto.responses.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;

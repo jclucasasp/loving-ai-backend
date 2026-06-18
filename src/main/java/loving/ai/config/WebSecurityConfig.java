@@ -1,6 +1,6 @@
 package loving.ai.config;
 
-import loving.ai.user.UserRepo;
+import loving.ai.dto.user.UserRepo;
 import loving.ai.utils.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

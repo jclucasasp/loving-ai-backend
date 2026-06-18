@@ -1,9 +1,8 @@
 package loving.ai.services;
 
-import loving.ai.personalities.PersonalityDescriptionRepo;
-import loving.ai.profile.Profile;
-import loving.ai.profile.ProfileRepo;
-import loving.ai.responses.Response;
+import loving.ai.dto.profile.Profile;
+import loving.ai.repo.ProfileRepo;
+import loving.ai.dto.responses.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

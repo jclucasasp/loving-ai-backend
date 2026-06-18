@@ -1,8 +1,11 @@
-package loving.ai.conversations;
+package loving.ai.controller;
 
-import loving.ai.matches.Match;
-import loving.ai.matches.MatchRepo;
-import loving.ai.responses.Response;
+import loving.ai.conversations.ChatMessage;
+import loving.ai.conversations.Conversation;
+import loving.ai.repo.ConversationRepo;
+import loving.ai.dto.matches.Match;
+import loving.ai.repo.MatchRepo;
+import loving.ai.dto.responses.Response;
 import loving.ai.services.interfaces.ResponseServiceInterface;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;

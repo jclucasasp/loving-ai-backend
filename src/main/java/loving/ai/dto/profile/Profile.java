@@ -1,4 +1,4 @@
-package loving.ai.profile;
+package loving.ai.dto.profile;
 
 
 import lombok.AllArgsConstructor;

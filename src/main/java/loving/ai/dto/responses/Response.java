@@ -1,4 +1,4 @@
-package loving.ai.responses;
+package loving.ai.dto.responses;
 
 public record Response (String messagePrompt,
                         String userId,

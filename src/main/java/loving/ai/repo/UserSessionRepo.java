@@ -1,5 +1,6 @@
-package loving.ai.session;
+package loving.ai.repo;
 
+import loving.ai.dto.session.UserSession;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;

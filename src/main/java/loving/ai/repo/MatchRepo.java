@@ -1,5 +1,6 @@
-package loving.ai.matches;
+package loving.ai.repo;
 
+import loving.ai.dto.matches.Match;
 import org.springframework.data.mongodb.repository.ExistsQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

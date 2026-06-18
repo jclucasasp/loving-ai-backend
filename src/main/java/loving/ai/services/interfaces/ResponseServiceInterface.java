@@ -1,5 +1,5 @@
 package loving.ai.services.interfaces;
-import loving.ai.responses.Response;
+import loving.ai.dto.responses.Response;
 
 import java.util.concurrent.CompletableFuture;
 

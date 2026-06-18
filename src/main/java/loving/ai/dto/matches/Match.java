@@ -1,4 +1,4 @@
-package loving.ai.matches;
+package loving.ai.dto.matches;
 
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.FieldType;

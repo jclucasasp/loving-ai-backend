@@ -1,6 +1,7 @@
-package loving.ai.session;
+package loving.ai.dto.session;
 
 import lombok.AllArgsConstructor;
+import loving.ai.repo.UserSessionRepo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;

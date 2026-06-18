@@ -1,4 +1,4 @@
-package loving.ai.session;
+package loving.ai.dto.session;
 
 import org.springframework.data.mongodb.core.mapping.FieldType;
 import org.springframework.data.mongodb.core.mapping.MongoId;
